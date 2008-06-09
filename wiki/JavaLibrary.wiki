@@ -1,14 +1,47 @@
+#summary Java Library Home Page
 #labels java
-#Introduction to Java Library
 
-= Introduction =
+Documentation for the Java Library
 
-Add your content here.
+== Building ==
 
+Foresite Java uses Maven 2.  You can build the JAR using
 
-= Details =
+{{{
+mvn clean package
+}}}
 
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
+in the root of the foresite source directory.
+
+== Constructing objects by hand ==
+
+{{{
+Aggregation agg = OREFactory.createAggregation(new URI('my-aggregation-uri'));
+ResourceMap rem = agg.createResourceMap(new URI('my-rem-uri'));
+AggregatedResource ar = agg.createAggregatedResource(new URI('my-resource-uri'));
+
+Agent creator = OREFactory.createAgent();
+creator.setName("My Creator");
+
+rem.setCreator(creator);
+
+agg.setCreator(creator);
+agg.setTitle("My Aggregation");
+}}}
+
+== Parsing Objects ==
+
+{{{
+InputStream input = new FileInputStream("file:///my/resource/map.rdf.xml");
+OREParser parser = OREParserFactory.getInstance("RDF/XML");
+ResourceMap rem = parser.parse(input);
+}}}
+
+== Serialising Objects ==
+
+{{{
+ResourceMap rem = OREFactory.createResourceMap(new URI("my-rem-uri"));
+ORESerialiser serial = ORESerialiserFactory.getInstance("N3");
+ResourceMapDocument doc = serial.serialise(rem);
+String serialisation = doc.toString();
+}}}
