@@ -1,11 +1,10 @@
 #summary Python Home Page
-
-= Introduction =
+#labels python
 
 Documentation for the Python library.
 
 
-= Simple Usage =
+== Simple Usage ==
 
 How to construct objects by hand:
 
@@ -30,6 +29,26 @@ a.add_agent(me, 'creator')
 srlz = AtomSerializer()
 a.register_serialization(srlz, 'my-atom-rem-uri')
 remdoc = a.get_serialization()
+
+print remdoc.data
+}}}
+
+Or by parsing an existing Resource Map:
+
+
+{{{
+
+from foresite import *
+
+remdoc = ReMDocument('http://www.openarchives.org/ore/0.9/atom-examples/atom_dlib_maxi.atom')
+
+ap = AtomParser()
+rem = ap.parse(remdoc)
+aggr = rem.aggregation
+
+srlz = RdfLibSerializer('xml')
+rem2 = aggr.register_serialization(srlz, 'my-rdfxml-rem-uri')
+remdoc = rem2.get_serialization()
 
 print remdoc.data
 }}}
