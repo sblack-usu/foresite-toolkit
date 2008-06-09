@@ -2,7 +2,7 @@
 import re
 from ore import *
 from utils import namespaces
-from rdflib import URIRef, plugin, syntax
+from rdflib import URIRef, BNode, plugin, syntax
 from lxml import etree
 from lxml.etree import Element, SubElement
 
@@ -217,8 +217,9 @@ class AtomSerializer(ORESerializer):
             if mb[:7] == "mailto:":
                 mb = mb[7:]
             n.text = str(mb)            
-        n = SubElement(parent, 'uri')
-        n.text = str(agent._uri_)
+        if not isinstance(agent._uri_, BNode):
+            n = SubElement(parent, 'uri')
+            n.text = str(agent._uri_)
 
     def make_link(self, parent, rel, t, g):
         e = SubElement(parent, 'link', rel=rel, href=str(t))

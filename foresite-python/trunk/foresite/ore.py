@@ -305,7 +305,7 @@ class Aggregation(OREResource):
         else:
             rem = None
             for r in self.resourceMaps:
-                if r.uri == uri:
+                if str(r.uri) == uri:
                     rem = r
                     break
             if not rem:
