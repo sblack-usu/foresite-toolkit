@@ -2,4 +2,34 @@
 
 = Introduction =
 
-Documentation for the Python library will go here.
+Documentation for the Python library.
+
+
+= Simple Usage =
+
+How to construct objects by hand:
+
+{{{
+from foresite import *
+
+a = Aggregation('my-aggregation-uri')
+a.title = "My Aggregation"
+
+res = AggregatedResource('my-photo-1-uri')
+res.title = "My first photo"
+res2 = AggregatedResource('my-photo-2-uri')
+res2.title = "My second photo"
+
+a.add_resource(res)
+a.add_resource(res2)
+
+me = Agent()
+me.name = "Rob Sanderson"
+a.add_agent(me, 'creator')
+
+srlz = AtomSerializer()
+a.register_serialization(srlz, 'my-atom-rem-uri')
+remdoc = a.get_serialization()
+
+print remdoc.data
+}}}
