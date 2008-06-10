@@ -190,6 +190,13 @@ class Aggregation(OREResource):
         at.isDefinedBy = namespaces['ore']
         self.add_triple(at)
 
+    def __iter__(self):
+        l = [x[0] for x in self._resources_]
+        return l.__iter__()
+
+    def __len__(self):
+        return len(self._resources_)
+
     def on_describe(self, rem):
         self._resourceMaps_.append(rem)
         

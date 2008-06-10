@@ -27,7 +27,6 @@ class ORESerializer(object):
         self.public = public
         self.mimeType = mimetypes.get(format, '')
 
-
     def merge_graphs(self, rem):
         g = Graph()
         if not rem._graph_.objects((rem._uri_, namespaces['dcterms']['creator'])):

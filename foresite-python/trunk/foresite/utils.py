@@ -117,7 +117,7 @@ except:
                 return ''.join(uuidl)
 
 def now():
-    return time.strftime("%Y-%m-%d %H:%M:%S")
+    return time.strftime("%Y-%m-%dT%H:%M:%S")
 
 def gen_proxy_uri(res, aggr):
     # Allow for easier expansion via adding fn to proxyTypeHash
