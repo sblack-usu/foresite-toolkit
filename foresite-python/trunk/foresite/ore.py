@@ -214,6 +214,9 @@ class Aggregation(OREResource):
         self._resources_.append((res, proxy))
         res.on_add(self, proxy)
 
+    def append(self, res):
+        self.add_resource(res)
+
     def remove_resource(self, res):
         tup = None
         for x in self._resources_:
@@ -224,6 +227,9 @@ class Aggregation(OREResource):
             self._resources_.remove(tup)
             res.on_remove(self, tup[1])
             del tup[1]
+
+    def remove(self, res):
+        self.remove_resource(res)
 
     def get_authoritative(self):
         rems = []
