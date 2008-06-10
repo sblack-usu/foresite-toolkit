@@ -62,8 +62,7 @@ rem.createTriple(atomUpdated, updated);
 When you serialise, you should get a triple like:
 
 {{{
-URI-REM atom:updated
-"01-01-1970"^^http://www.w3.org/rdf-date-type-uri-whatever-that-is
+URI-REM atom:updated "01-01-1970"^^http://www.w3.org/rdf-date-type-uri-whatever-that-is
 }}}
 
 You can also create a stand-alond triple and add it to an object, thus:
