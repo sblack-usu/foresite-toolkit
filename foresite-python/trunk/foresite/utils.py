@@ -4,8 +4,6 @@ import time
 import re
 from rdflib import Namespace
 
-
-
 ### Configuration Options
 ### Assign a UUID URI or Blank Node for autogenerating agent URIs
 ### if not present in data

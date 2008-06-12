@@ -1,7 +1,7 @@
 
 import re
 from ore import *
-from utils import namespaces
+from utils import namespaces, OreException
 from rdflib import URIRef, BNode, plugin, syntax
 from lxml import etree
 from lxml.etree import Element, SubElement
@@ -29,7 +29,7 @@ class ORESerializer(object):
 
     def merge_graphs(self, rem):
         g = Graph()
-        if not rem._graph_.objects((rem._uri_, namespaces['dcterms']['creator'])):
+        if not list(rem._graph_.objects(rem._uri_, namespaces['dcterms']['creator'])):
             rem.add_agent(libraryAgent, 'creator')
 
         g += rem._graph_
@@ -64,7 +64,7 @@ class ORESerializer(object):
             for p in internalPredicates:
                 for (s,o) in g.subject_objects(p):
                     g.remove((s,p,o))
-        if not g.objects((aggr._uri_, namespaces['ore']['aggregates'])):
+        if not aggr._resources_:
             raise OreException("Aggregation must aggregate something")
 
         # DISCUSS: Ensure connectedness.
@@ -110,6 +110,7 @@ class AtomSerializer(ORESerializer):
     def __init__(self, format="atom", public=1):
         ORESerializer.__init__(self, format)
         self.spacesub = re.compile('(?<=>)[ ]+(?=<)')
+        self.done_triples = []
 
     def remove_link_attrs(self, sg, a):
         # only remove first from each list
@@ -118,7 +119,7 @@ class AtomSerializer(ORESerializer):
             if objs:
                 sg.remove((a, ns, objs[0]))
         
-    def generate_rdf(self, parent, what, graph):
+    def generate_rdf(self, parent, what):
         # extract not processed parts of graph
         # serialise with rdflib
         # parse with lxml and add to parent element
@@ -127,6 +128,9 @@ class AtomSerializer(ORESerializer):
         sg += what.graph
         for at in what.triples:
             sg += at.graph
+        for a in what.agents:
+            sg += a.graph
+
 
         for a in what.type:                
             for b in sg.objects(a, namespaces['rdfs']['isDefinedBy']):
@@ -134,6 +138,9 @@ class AtomSerializer(ORESerializer):
             for b in sg.objects(a, namespaces['rdfs']['label']):
                 sg.remove((a, namespaces['rdfs']['label'], b))
             sg.remove((what.uri, namespaces['rdf']['type'], a))
+
+        for t in self.done_triples:
+            sg.remove(t)
 
         if isinstance(what, Aggregation) or isinstance(what, AggregatedResource):
             # remove atom srlzd bits
@@ -144,8 +151,10 @@ class AtomSerializer(ORESerializer):
                 pass
             for a in what.creator:
                 sg.remove((what.uri, namespaces['dcterms']['creator'], a))
+                                
             for a in what.contributor:
                 sg.remove((what.uri, namespaces['dcterms']['contributor'], a))
+
             for a in what._ore.similarTo:
                 self.remove_link_attrs(sg, a)
                 sg.remove((what.uri, namespaces['ore']['similarTo'], a))
@@ -166,10 +175,12 @@ class AtomSerializer(ORESerializer):
                 for a in sg.objects(what.uri, namespaces['ore']['isDescribedBy']):
                     self.remove_link_attrs(sg, a)
                     sg.remove((what.uri, namespaces['ore']['isDescribedBy'], a))
+                self.done_triples.extend(list(sg))
             else:
                 # remove isAggregatedBy == rel=related
                 for a in what._ore.isAggregatedBy:
                     sg.remove((what.uri, namespaces['ore']['isAggregatedBy'], a))
+                self.done_triples = []
 
         elif isinstance(what, ResourceMap):
 
@@ -195,16 +206,20 @@ class AtomSerializer(ORESerializer):
                 sg.remove((what.uri, namespaces['ore']['describes'], what._ore.describes[0]))
             except:
                 pass
+            self.done_triples = []
 
         data = sg.serialize(format='xml')
         root = etree.fromstring(data)
         for child in root:
             parent.append(child)
 
+
     def make_agent(self, parent, agent):
         n = SubElement(parent, 'name')
         try:
-            n.text = str(agent._foaf.name[0])
+            name = agent._foaf.name[0]
+            n.text = str(name)
+            self.done_triples.append((agent._uri_, namespaces['foaf']['name'], name))
         except:
             # allow blank names where unknown
             pass
@@ -212,13 +227,16 @@ class AtomSerializer(ORESerializer):
         if agent._foaf.mbox:
             n = SubElement(parent, 'email')
             mb = agent._foaf.mbox[0]
+            self.done_triples.append((agent._uri_, namespaces['foaf']['mbox'], mb))
+            mb = str(mb)
             # Strip mailto: (eg not a URI any more)
             if mb[:7] == "mailto:":
                 mb = mb[7:]
-            n.text = str(mb)            
+            n.text = mb            
         if not isinstance(agent._uri_, BNode):
             n = SubElement(parent, 'uri')
             n.text = str(agent._uri_)
+
 
     def make_link(self, parent, rel, t, g):
         e = SubElement(parent, 'link', rel=rel, href=str(t))
@@ -249,7 +267,7 @@ class AtomSerializer(ORESerializer):
         e = SubElement(root, 'id')
         e.text = str(aggr.uri)
         if not aggr._dc.title:
-            raise ValueError("Atom Serialisation requires title on aggregation")
+            raise OreException("Atom Serialisation requires title on aggregation")
         else:
             e = SubElement(root, 'title')
             e.text = str(aggr._dc.title[0])
@@ -296,7 +314,7 @@ class AtomSerializer(ORESerializer):
             if not t in orms:
                 self.make_link(root, 'alternate', t, g)
 
-        self.generate_rdf(root, aggr, g)
+        self.generate_rdf(root, aggr)
 
         ## ReM Info
         self.make_link(root, 'self', rem.uri, g)
@@ -306,9 +324,12 @@ class AtomSerializer(ORESerializer):
 
         # ReM Author
         if rem._dcterms.creator:
-            e = SubElement(root, 'generator', uri=str(rem._dcterms.creator[0]))
-            agent = all_objects[rem._dcterms.creator[0]]
-            e.text = agent._foaf.name[0]
+            uri = rem._dcterms.creator[0]
+            e = SubElement(root, 'generator', uri=str(uri))
+            agent = all_objects[uri]
+            n = agent._foaf.name[0]
+            e.text = str(n)
+            self.done_triples.append((uri, namespaces['foaf']['name'], n))
 
         # if no logo, put in nice ORE icon
         e = SubElement(root, 'icon')
@@ -323,7 +344,7 @@ class AtomSerializer(ORESerializer):
             e = SubElement(root, 'rights')
             e.text = rem._dc.rights[0]
 
-        self.generate_rdf(root, rem, g)
+        self.generate_rdf(root, rem)
 
         ## Process Entries
         for (res, proxy) in aggr._resources_:
@@ -383,7 +404,7 @@ class AtomSerializer(ORESerializer):
             if proxy._ore.lineage:
                 e = SubElement(entry, 'link', rel="via", href=str(proxy._ore.lineage[0]))
 
-            self.generate_rdf(entry, res, g)
+            self.generate_rdf(entry, res)
 
         data = etree.tostring(root)
         data = data.replace('\n', '')

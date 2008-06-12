@@ -245,9 +245,6 @@ class Aggregation(OREResource):
         # Only used for sparql query across everything, not serialization
         g = Graph()
         for rem in self.resourceMaps:
-            if not rem._graph_.objects((rem._uri_, namespaces['dcterms']['creator'])):
-                rem.add_agent(libraryAgent, 'creator')
-
             g += rem._graph_
             for at in rem._triples_:
                 g += at._graph_
@@ -355,6 +352,9 @@ class Agent(OREResource):
                 uri = BNode()
         OREResource.__init__(self, uri)
 
+libraryAgent = Agent('http://foresite.cheshire3.org/Agent')
+libraryAgent.name = "Foresite Toolkit (Python)"
+libraryAgent.mbox = "foresite@googlegroups.com"
 
 class AggregatedResource(OREResource):
     # Convenience class for OREResource
