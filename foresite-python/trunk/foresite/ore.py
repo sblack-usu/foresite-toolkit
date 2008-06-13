@@ -51,6 +51,9 @@ class OREResource(object):
         self._aggregations_ = []
         all_objects[self._uri_] = self
 
+    def __str__(self):
+        return str(self.uri)
+
     def __getattr__(self, name):
         # fetch value from graph
         cns = self.currNs
@@ -197,6 +200,12 @@ class Aggregation(OREResource):
     def __len__(self):
         return len(self._resources_)
 
+    def __contains__(self, what):
+        for x in self._resources_:
+            if what in x or what == str(x[0].uri) or what == str(x[1].uri):
+                return True
+        return False
+
     def on_describe(self, rem):
         self._resourceMaps_.append(rem)
         
@@ -214,7 +223,12 @@ class Aggregation(OREResource):
         self._resources_.append((res, proxy))
         res.on_add(self, proxy)
 
+    # List API
     def append(self, res):
+        self.add_resource(res)
+
+    # Set API
+    def add(self, res):
         self.add_resource(res)
 
     def remove_resource(self, res):
@@ -228,7 +242,12 @@ class Aggregation(OREResource):
             res.on_remove(self, tup[1])
             del tup[1]
 
+    # List, Set API
     def remove(self, res):
+        self.remove_resource(res)
+
+    # Set API
+    def discard(self, res):
         self.remove_resource(res)
 
     def get_authoritative(self):
