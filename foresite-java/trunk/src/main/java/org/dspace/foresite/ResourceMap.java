@@ -66,6 +66,8 @@ public interface ResourceMap extends OREResource
 
     void setModified(Date modified);
 
+	void removeModified() throws OREException;
+
 	// methods for dealing with rights associated with Resource Maps
 
 	// FIXME: one or many rights?
@@ -96,4 +98,8 @@ public interface ResourceMap extends OREResource
 	// methods for doing SPARQL queries on resource maps
 	
 	List<Triple> doSparql(String sparql);
+
+	// utility methods to perform on Resource Maps
+	
+	ResourceMap copy() throws OREException;
 }

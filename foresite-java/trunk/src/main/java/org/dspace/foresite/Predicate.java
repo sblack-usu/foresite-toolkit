@@ -50,7 +50,14 @@ public class Predicate
 
     private String name;
 
-    /*
+	public Predicate() { }
+
+	public Predicate(URI uri)
+	{
+		this.uri = uri;
+	}
+
+	/*
     public String toString()
     {
         return prefix + ":" + name;

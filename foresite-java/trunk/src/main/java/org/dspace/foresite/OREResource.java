@@ -131,4 +131,8 @@ public interface OREResource
 	//void addAgent(URI relationship) throws OREException;
 
 	//void clearAgents(URI relationship) throws OREException;
+
+	// utilities for dealing with chunks of external rdf being added to the graph
+
+	void addRDF(String rdf, String format) throws OREException;
 }

@@ -43,6 +43,8 @@ import org.dspace.foresite.OREException;
 import org.dspace.foresite.ResourceMap;
 import org.dspace.foresite.OREFactory;
 import org.dspace.foresite.Proxy;
+import org.dspace.foresite.DateParser;
+import org.dspace.foresite.OREParserException;
 
 import java.util.List;
 import java.util.Date;
@@ -159,17 +161,17 @@ public class AggregationJena extends OREResourceJena implements Aggregation
     {
         try
         {
-            SimpleDateFormat sdf = new SimpleDateFormat(JenaOREConstants.dateFormat);
+            // SimpleDateFormat sdf = new SimpleDateFormat(JenaOREConstants.dateFormat);
             Statement statement = res.getProperty(DCTerms.created);
             if (statement == null)
             {
                 return null;
             }
             String date = ((Literal) statement.getObject()).getLexicalForm();
-            Date created = sdf.parse(date);
+            Date created = DateParser.parse(date);
             return created;
         }
-        catch (ParseException e)
+        catch (OREParserException e)
         {
             throw new OREException(e);
         }
@@ -834,21 +836,5 @@ public class AggregationJena extends OREResourceJena implements Aggregation
         List<Proxy> proxies = this.getProxies();
 
         // proxy.empty();
-    }
-
-    ///////////////////////////////////////////////////////////////////
-    // Private Methods
-    ///////////////////////////////////////////////////////////////////
-
-    private void addResourceToModel(Resource resource)
-    {
-        StmtIterator itr = resource.listProperties();
-        model.add(itr);
-    }
-
-    private void addModelToModel(Model externalModel)
-    {
-        StmtIterator itr = externalModel.listStatements();
-        model.add(itr);
     }
 }

@@ -43,6 +43,8 @@ import org.dspace.foresite.OREException;
 import org.dspace.foresite.OREFactory;
 import org.dspace.foresite.ReMSerialisation;
 import org.dspace.foresite.AggregatedResource;
+import org.dspace.foresite.DateParser;
+import org.dspace.foresite.OREParserException;
 
 import java.util.Date;
 import java.util.List;
@@ -53,6 +55,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.text.ParseException;
+import java.text.DateFormat;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
@@ -62,6 +65,7 @@ import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.Selector;
 import com.hp.hpl.jena.rdf.model.SimpleSelector;
 import com.hp.hpl.jena.rdf.model.RDFNode;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.vocabulary.DC;
 import com.hp.hpl.jena.vocabulary.DCTerms;
 import com.hp.hpl.jena.vocabulary.RDF;
@@ -186,22 +190,22 @@ public class ResourceMapJena extends OREResourceJena implements ResourceMap
     {
         try
         {
-            SimpleDateFormat sdf = new SimpleDateFormat(JenaOREConstants.dateFormat);
-            StmtIterator itr = res.listProperties(DCTerms.created);
+            // SimpleDateFormat sdf = new SimpleDateFormat(JenaOREConstants.dateFormat);
+			StmtIterator itr = res.listProperties(DCTerms.created);
             if (itr.hasNext())
             {
                 Statement statement = itr.nextStatement();
                 String value = ((Literal) statement.getObject()).getLexicalForm();
-                Date created = sdf.parse(value);
+                Date created = DateParser.parse(value);
                 return created;
             }
             return null;
         }
-        catch (ParseException e)
+		catch (OREParserException e)
         {
             throw new OREException(e);
         }
-    }
+	}
 
     public void setCreated(Date created)
     {
@@ -239,11 +243,21 @@ public class ResourceMapJena extends OREResourceJena implements ResourceMap
         res.addProperty(DCTerms.modified, model.createTypedLiteral(date, JenaOREConstants.dateTypedLiteral));
     }
 
-    public String getRights()
+	public void removeModified()
+			throws OREException
+	{
+		res.removeAll(DCTerms.modified);
+	}
+
+	public String getRights()
     {
         Statement statement = res.getProperty(DC.rights);
-        return statement.getString();
-    }
+		if (statement != null)
+		{
+			return statement.getString();
+		}
+		return null;
+	}
 
     public void setRights(String rights)
     {
@@ -338,6 +352,16 @@ public class ResourceMapJena extends OREResourceJena implements ResourceMap
         return null;
     }
 
+	public ResourceMap copy() throws OREException
+	{
+		Model model = this.getModel();
+		StmtIterator itr = model.listStatements();
+		Model nModel = ModelFactory.createDefaultModel();
+		nModel.add(itr);
+		ResourceMap nrem = JenaOREFactory.createResourceMap(nModel, this.getURI());
+		return nrem;
+	}
+
 	///////////////////////////////////////////////////////////////////
 	// methods from OREResourceJena
 	///////////////////////////////////////////////////////////////////
@@ -360,20 +384,4 @@ public class ResourceMapJena extends OREResourceJena implements ResourceMap
 		// now go back and build the resource map in the super class
 		super.setModel(model, resourceURI);
 	}
-
-	///////////////////////////////////////////////////////////////////
-    // Private Methods
-    ///////////////////////////////////////////////////////////////////
-
-    private void addResourceToModel(Resource resource)
-    {
-        StmtIterator itr = resource.listProperties();
-        model.add(itr);
-    }
-
-    private void addModelToModel(Model externalModel)
-    {
-        StmtIterator itr = externalModel.listStatements();
-        model.add(itr);
-    }
 }

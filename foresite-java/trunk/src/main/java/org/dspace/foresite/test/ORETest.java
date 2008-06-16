@@ -66,7 +66,7 @@ public class ORETest
             throws Exception
     {
         ORETest test = new ORETest();
-        test.rdfxmlWriting();
+        // test.rdfxmlWriting();
         // test.nTripleWriting();
         // test.n3Writing();
         // test.rdfxmlAbbrevWriting();
@@ -76,7 +76,7 @@ public class ORETest
         // test.clearingStuff();
         // test.rdfxmlParsing();
         // test.querying();
-		// test.atomWriting();
+		test.atomWriting();
 		// test.turtleWriting();
 	}
 

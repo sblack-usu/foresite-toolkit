@@ -37,6 +37,8 @@ package org.dspace.foresite;
 
 import java.io.InputStream;
 import java.io.ByteArrayInputStream;
+import java.io.OutputStream;
+import java.io.IOException;
 
 /**
  * @Author Richard Jones
@@ -61,4 +63,22 @@ public class ORETransformer
         ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
         return bais;
     }
+
+	public static void transformToStream(String source, String target, InputStream is, OutputStream os)
+			throws OREParserException, ORESerialiserException
+	{
+		try
+		{
+			ResourceMapDocument rmd = ORETransformer.transformToDocument(source, target, is);
+			byte[] bytes = rmd.getSerialisation().getBytes();
+			for (int i = 0 ; i < bytes.length; i++)
+			{
+				os.write(bytes[i]);
+			}
+		}
+		catch (IOException e)
+		{
+			throw new ORESerialiserException("Problem construcing output stream");
+		}
+	}
 }

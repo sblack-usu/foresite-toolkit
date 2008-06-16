@@ -48,6 +48,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.io.ByteArrayInputStream;
 
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 import com.hp.hpl.jena.rdf.model.Statement;
@@ -84,8 +85,13 @@ public abstract class OREResourceJena implements OREResource, GraphResource
     {
         try
         {
-            return new URI(res.getURI());
-        }
+			String uri = res.getURI();
+			if (uri != null)
+			{
+				return new URI(uri);
+			}
+			return null;
+		}
         catch (URISyntaxException e)
         {
             throw new OREException(e);
@@ -208,26 +214,38 @@ public abstract class OREResourceJena implements OREResource, GraphResource
         model.remove(statement);
     }
 
-    public Triple createTriple(Predicate pred, OREResource resource) throws OREException
+    public Triple createTriple(Predicate pred, OREResource resource)
+			throws OREException
     {
         Triple triple = OREFactory.createTriple(this, pred, resource);
         this.addTriple(triple);
         return triple;
     }
 
-    public Triple createTriple(Predicate pred, URI uri) throws OREException
+    public Triple createTriple(Predicate pred, URI uri)
+			throws OREException
     {
         Triple triple = OREFactory.createTriple(this, pred, uri);
         this.addTriple(triple);
         return triple;
     }
 
-    public Triple createTriple(Predicate pred, Object literal) throws OREException
+    public Triple createTriple(Predicate pred, Object literal)
+			throws OREException
     {
         Triple triple = OREFactory.createTriple(this, pred, literal);
         this.addTriple(triple);
         return triple;
     }
+
+	public void addRDF(String rdf, String format)
+			throws OREException
+	{
+		ByteArrayInputStream is = new ByteArrayInputStream(rdf.getBytes());
+		Model model = ModelFactory.createDefaultModel();
+        model = model.read(is, null, format);
+		this.addModelToModel(model);
+	}
 
 	///////////////////////////////////////////////////////////////////
 	// methods from OREResource which remain Abstract
@@ -369,4 +387,16 @@ public abstract class OREResourceJena implements OREResource, GraphResource
 			throw new OREException(e);
 		}
 	}
+
+    protected void addResourceToModel(Resource resource)
+    {
+        StmtIterator itr = resource.listProperties();
+        model.add(itr);
+    }
+
+    protected void addModelToModel(Model externalModel)
+    {
+        StmtIterator itr = externalModel.listStatements();
+        model.add(itr);
+    }
 }
