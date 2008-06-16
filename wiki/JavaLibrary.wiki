@@ -13,6 +13,16 @@ mvn clean package
 
 in the root of the foresite source directory.
 
+== Command Line ==
+
+You can perform basic resource map transformations via the command line:
+
+{{{
+java org.dspace.foresite.cli.ForesiteCLI -t -i /path/to/file.xml -f ATOM-1.0 -r RDF/XML
+}}}
+
+This will take the ATOM-1.0 format document at /path/to/file.xml and convert it into an RDF/XML document and print it to the standard output.  Add a -o option to write to a file.
+
 == Constructing objects by hand ==
 
 {{{
