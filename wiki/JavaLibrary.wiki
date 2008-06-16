@@ -89,3 +89,20 @@ rem.addTriple(triple);
 }}}
 
 if "subject-uri" and "object-uri" are not present anywhere else in the graph at the time the triple is added, then an OREException will be thrown warning you that the graph is not connected.
+
+== Supported Formats ==
+
+These are the natively supported serialisation formats that can be written and read.  Use these exactly as written to instantiate parsers and serialisers, thus:
+
+{{{
+OREParser parser = OREParserFactory.getInstance("ATOM-1.0");
+ORESerialiser serial = ORESerialiserFactory.getInstance("N3");
+}}}
+
+  * ATOM-1.0
+  * RDF/XML
+  * RDF/XML-ABBREV
+  * N3
+  * N-TRIPLE
+  * TURTLE
+  * RDFa
