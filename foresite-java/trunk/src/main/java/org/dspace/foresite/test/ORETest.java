@@ -72,11 +72,11 @@ public class ORETest
         // test.rdfxmlAbbrevWriting();
         // test.rdfaWriting();
         // test.basicReading();
-        // test.atomParsing();
+        test.atomParsing();
         // test.clearingStuff();
         // test.rdfxmlParsing();
         // test.querying();
-		test.atomWriting();
+		// test.atomWriting();
 		// test.turtleWriting();
 	}
 

@@ -54,6 +54,8 @@ import java.io.InputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.ByteArrayInputStream;
+import java.io.FileReader;
+import java.io.Reader;
 
 /**
  * @Author Richard Jones
@@ -73,11 +75,11 @@ public class RDFaORESerialiser implements ORESerialiser
 			TransformerFactory tFactory = TransformerFactory.newInstance();
 
 			// FIXME: this doesn't seem all that reliable
-			InputStream is = this.getClass().getResourceAsStream("rdfxml2rdfa.xsl");
-			StreamSource xslt = new StreamSource(is);
+			//InputStream is = this.getClass().getResourceAsStream("rdfxml2rdfa.xsl");
+			//StreamSource xslt = new StreamSource(is);
 
-			//Reader reader = new FileReader("/home/richard/workspace/dspace-trunk/ore4j/src/main/resources/rdfxml2rdfa.xsl");
-            // StreamSource xslt = new StreamSource(reader);
+			Reader reader = new FileReader("/home/richard/workspace/dspace-trunk/foresite/src/main/resources/rdfxml2rdfa.xsl");
+            StreamSource xslt = new StreamSource(reader);
 
 			Transformer transformer = tFactory.newTransformer(xslt);
 
@@ -116,10 +118,10 @@ public class RDFaORESerialiser implements ORESerialiser
         {
             throw new ORESerialiserException(e);
         }
-        //catch (FileNotFoundException e)
-        //{
-        //    throw new ORESerialiserException(e);
-        //}
+        catch (FileNotFoundException e)
+        {
+            throw new ORESerialiserException(e);
+        }
     }
 
 	public ResourceMapDocument serialiseRaw(ResourceMap rem) throws ORESerialiserException

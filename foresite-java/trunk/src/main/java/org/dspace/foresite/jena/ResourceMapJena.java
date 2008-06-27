@@ -45,6 +45,7 @@ import org.dspace.foresite.ReMSerialisation;
 import org.dspace.foresite.AggregatedResource;
 import org.dspace.foresite.DateParser;
 import org.dspace.foresite.OREParserException;
+import org.dspace.foresite.Vocab;
 
 import java.util.Date;
 import java.util.List;
@@ -90,7 +91,12 @@ public class ResourceMapJena extends OREResourceJena implements ResourceMap
 
     }
 
-    ///////////////////////////////////////////////////////////////////
+	public void detach() throws OREException
+	{
+		//To change body of implemented methods use File | Settings | File Templates.
+	}
+
+	///////////////////////////////////////////////////////////////////
     // Methods from ResourceMap
     ///////////////////////////////////////////////////////////////////
     
@@ -268,6 +274,33 @@ public class ResourceMapJena extends OREResourceJena implements ResourceMap
     {
         res.removeAll(DC.rights);
     }
+
+	public void setTypes(List<URI> types)
+    {
+        super.setTypes(types);
+
+		// ensure that the required type is still set
+		Selector selector = new SimpleSelector(res, RDF.type, ORE.ResourceMap);
+		StmtIterator itr = model.listStatements(selector);
+		if (!itr.hasNext())
+		{
+			res.addProperty(RDF.type, ORE.ResourceMap);
+		}
+	}
+
+    public void clearTypes()
+    {
+		// leave it to OREResource to handle type clearance
+		super.clearTypes();
+
+		// ensure that the required type is still set
+		res.addProperty(RDF.type, ORE.ResourceMap);
+	}
+
+	public Vocab getOREType() throws OREException
+	{
+		return Vocab.ore_ResourceMap;
+	}
 
 	// FIXME: this must only create one aggregation ever, or throw and error!
 	public Aggregation createAggregation(URI uri)

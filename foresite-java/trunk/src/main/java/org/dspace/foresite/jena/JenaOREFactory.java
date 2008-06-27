@@ -102,7 +102,7 @@ public class JenaOREFactory
 			throws OREException
 	{
         ResourceMapJena rem = new ResourceMapJena();
-        rem.setModel(model, resourceURI);
+		rem.setModel(model, resourceURI);
         return rem;
     }
 

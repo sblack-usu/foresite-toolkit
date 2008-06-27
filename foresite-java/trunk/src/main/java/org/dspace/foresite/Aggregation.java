@@ -78,16 +78,6 @@ public interface Aggregation extends OREResource
 
     void clearTitles();
 
-	// methods to deal with Aggregation type information
-
-	List<URI> getTypes() throws OREException;
-
-    void setTypes(List<URI> types) throws OREException;
-
-    void addType(URI type) throws OREException;
-
-    void clearTypes() throws OREException;
-
 	// methods to deal with URIs which are similar to the current Aggregation,
 	// or which have the weaker relationship of rdfs:seeAlso
 

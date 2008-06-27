@@ -37,6 +37,7 @@ package org.dspace.foresite.jena;
 
 import org.dspace.foresite.Agent;
 import org.dspace.foresite.OREException;
+import org.dspace.foresite.Vocab;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -48,6 +49,8 @@ import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
+import com.hp.hpl.jena.rdf.model.Selector;
+import com.hp.hpl.jena.rdf.model.SimpleSelector;
 import com.hp.hpl.jena.sparql.vocabulary.FOAF;
 
 /**
@@ -69,7 +72,12 @@ public class AgentJena extends OREResourceJena implements Agent
 
     }
 
-    ///////////////////////////////////////////////////////////////////
+	public void detach() throws OREException
+	{
+		//To change body of implemented methods use File | Settings | File Templates.
+	}
+
+	///////////////////////////////////////////////////////////////////
     // Methods from Agent
     ///////////////////////////////////////////////////////////////////
 
@@ -197,24 +205,31 @@ public class AgentJena extends OREResourceJena implements Agent
 		res.addProperty(FOAF.mbox, model.createResource(mbox.toString()));
     }
 
-	public List<Agent> getCreators()
-	{
-		return null;  //To change body of implemented methods use File | Settings | File Templates.
+	public void setTypes(List<URI> types)
+    {
+        super.setTypes(types);
+
+		// ensure that the required type is still set
+		Selector selector = new SimpleSelector(res, RDF.type, model.createResource("http://purl.org/dc/terms/Agent"));
+		StmtIterator itr = model.listStatements(selector);
+		if (!itr.hasNext())
+		{
+			res.addProperty(RDF.type, model.createResource("http://purl.org/dc/terms/Agent"));
+		}
 	}
 
-	public void setCreators(List<Agent> creators)
-	{
-		//To change body of implemented methods use File | Settings | File Templates.
+    public void clearTypes()
+    {
+		// leave it to OREResource to handle type clearance
+		super.clearTypes();
+
+		// ensure that the required type is still set
+		res.addProperty(RDF.type, model.createResource("http://purl.org/dc/terms/Agent"));
 	}
 
-	public void addCreator(Agent creator)
+	public Vocab getOREType() throws OREException
 	{
-		//To change body of implemented methods use File | Settings | File Templates.
-	}
-
-	public void clearCreators()
-	{
-		//To change body of implemented methods use File | Settings | File Templates.
+		return Vocab.dcterms_Agent;
 	}
 
 	///////////////////////////////////////////////////////////////////

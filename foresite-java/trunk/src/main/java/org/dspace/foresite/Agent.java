@@ -39,35 +39,83 @@ import java.net.URI;
 import java.util.List;
 
 /**
- * @Author Richard Jones
+ * Interface representing an Agent which can be attached to any ORE resource to
+ * represent a person or other entity which has acted upon the resource.
+ *
+ * Agents can be either blank nodes or bound to a URI, depending on how they
+ * are initialised.
+ *
+ * This class extends {@link OREResource}, so inherits all the interface
+ * definitions from there also.
+ *
+ * @see OREResource
+ *
+ * @author Richard Jones
  */
 public interface Agent extends OREResource
 {
+	///////////////////////////////////////////////////////////////////
 	// methods for initialising the Agent
+    ///////////////////////////////////////////////////////////////////
 
+	/**
+	 * Initialise an Agent as a blank node
+	 */
 	void initialise();
 
+	/**
+	 * Initialise an Agent with the given URI
+	 *
+	 * @param uri
+	 */
 	void initialise(URI uri);
 
-	// Refactored out for 0.9...
-	
-	// List<URI> getSeeAlso() throws OREException;
+	///////////////////////////////////////////////////////////////////
+	// methods for setting specific Agent properties
+	///////////////////////////////////////////////////////////////////
 
-    // void addSeeAlso(URI uri);
+	/**
+	 * Get all the names associated with this Agent
+	 *
+	 * @return	the list of names associated with this Agent
+	 * @throws OREException
+	 */
+	List<String> getNames() throws OREException;
 
-    // void setSeeAlso(List<URI> uris);
+	/**
+	 * Set the list of names associated with this Agent.  Should override
+	 * any existing names
+	 *
+	 * @param names
+	 */
+	void setNames(List<String> names);
 
-    // void clearSeeAlso();
+	/**
+	 * Add the given name to the current list of names associated with this Agent
+	 * @param name
+	 */
+	void addName(String name);
 
-    List<String> getNames() throws OREException;
+	/**
+	 * Get all the mboxes (i.e. email address URIs) associated with this Agent
+	 *
+	 * @return the list of mboxes associated with this agent
+	 * @throws OREException
+	 */
+	List<URI> getMboxes() throws OREException;
 
-    void setNames(List<String> names);
+	/**
+	 * Set the list of mboxes (i.e. email address URIs) asscoiated with this Agent.
+	 * Should override any existing mboxes
+	 *
+	 * @param mboxes
+	 */
+	void setMboxes(List<URI> mboxes);
 
-    void addName(String name);
-
-    List<URI> getMboxes() throws OREException;
-
-    void setMboxes(List<URI> mboxes);
-
-    void addMbox(URI mbox);
+	/**
+	 * Add the given mbox (i.e. email address URI) to the Agent
+	 * 
+	 * @param mbox
+	 */
+	void addMbox(URI mbox);
 }

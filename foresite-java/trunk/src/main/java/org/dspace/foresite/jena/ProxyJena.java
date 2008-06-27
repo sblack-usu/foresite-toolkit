@@ -40,6 +40,7 @@ import org.dspace.foresite.AggregatedResource;
 import org.dspace.foresite.Aggregation;
 import org.dspace.foresite.OREException;
 import org.dspace.foresite.Agent;
+import org.dspace.foresite.Vocab;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -73,7 +74,12 @@ public class ProxyJena extends OREResourceJena implements Proxy
 
     }
 
-    ///////////////////////////////////////////////////////////////////
+	public void detach() throws OREException
+	{
+		//To change body of implemented methods use File | Settings | File Templates.
+	}
+
+	///////////////////////////////////////////////////////////////////
     // Methods from Proxy
     ///////////////////////////////////////////////////////////////////
 
@@ -202,23 +208,30 @@ public class ProxyJena extends OREResourceJena implements Proxy
 		}
 	}
 
-	public List<Agent> getCreators()
-	{
-		return null;  //To change body of implemented methods use File | Settings | File Templates.
+	public void setTypes(List<URI> types)
+    {
+        super.setTypes(types);
+
+		// ensure that the required type is still set
+		Selector selector = new SimpleSelector(res, RDF.type, ORE.Proxy);
+		StmtIterator itr = model.listStatements(selector);
+		if (!itr.hasNext())
+		{
+			res.addProperty(RDF.type, ORE.Proxy);
+		}
 	}
 
-	public void setCreators(List<Agent> creators)
-	{
-		//To change body of implemented methods use File | Settings | File Templates.
+    public void clearTypes()
+    {
+		// leave it to OREResource to handle type clearance
+		super.clearTypes();
+
+		// ensure that the required type is still set
+		res.addProperty(RDF.type, ORE.Proxy);
 	}
 
-	public void addCreator(Agent creator)
+	public Vocab getOREType() throws OREException
 	{
-		//To change body of implemented methods use File | Settings | File Templates.
-	}
-
-	public void clearCreators()
-	{
-		//To change body of implemented methods use File | Settings | File Templates.
+		return Vocab.ore_Proxy;
 	}
 }

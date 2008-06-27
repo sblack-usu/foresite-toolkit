@@ -45,6 +45,7 @@ import org.dspace.foresite.OREFactory;
 import org.dspace.foresite.Proxy;
 import org.dspace.foresite.DateParser;
 import org.dspace.foresite.OREParserException;
+import org.dspace.foresite.Vocab;
 
 import java.util.List;
 import java.util.Date;
@@ -88,7 +89,12 @@ public class AggregationJena extends OREResourceJena implements Aggregation
 
     }
 
-    ///////////////////////////////////////////////////////////////////
+	public void detach() throws OREException
+	{
+		//To change body of implemented methods use File | Settings | File Templates.
+	}
+
+	///////////////////////////////////////////////////////////////////
     // Methods from Aggregation
     ///////////////////////////////////////////////////////////////////
 
@@ -277,41 +283,9 @@ public class AggregationJena extends OREResourceJena implements Aggregation
         model.remove(itr);
     }
 
-    public List<URI> getTypes()
-			throws OREException
-	{
-		try
-		{
-			List<URI> types = new ArrayList<URI>();
-			StmtIterator itr = res.listProperties(RDF.type);
-			while (itr.hasNext())
-			{
-				Statement statement = itr.nextStatement();
-				RDFNode node = statement.getObject();
-				if (node instanceof Resource)
-				{
-					types.add(new URI(((Resource) node).getURI()));
-				}
-				else if (node instanceof Literal)
-				{
-					throw new OREException("Type MAY NOT be Literal; error in graph");
-				}
-			}
-			return types;
-		}
-		catch (URISyntaxException e)
-		{
-			throw new OREException(e);
-		}
-	}
-
     public void setTypes(List<URI> types)
     {
-        this.clearTypes();
-        for (URI type : types)
-        {
-            this.addType(type);
-        }
+        super.setTypes(types);
 
 		// ensure that the required type is still set
 		Selector selector = new SimpleSelector(res, RDF.type, ORE.Aggregation);
@@ -322,21 +296,21 @@ public class AggregationJena extends OREResourceJena implements Aggregation
 		}
 	}
 
-    public void addType(URI type)
-    {
-        res.addProperty(RDF.type, model.createResource(type.toString()));
-    }
-
     public void clearTypes()
     {
-        StmtIterator itr = res.listProperties(RDF.type);
-        model.remove(itr);
+		// leave it to OREResource to handle type clearance
+		super.clearTypes();
 
 		// ensure that the required type is still set
 		res.addProperty(RDF.type, ORE.Aggregation);
 	}
 
-    public List<URI> getSimilarTo()
+	public Vocab getOREType() throws OREException
+	{
+		return Vocab.ore_Aggregation;
+	}
+
+	public List<URI> getSimilarTo()
             throws OREException
     {
         try
@@ -704,8 +678,8 @@ public class AggregationJena extends OREResourceJena implements Aggregation
 			rem.setAuthoritative(true);
 		}
 
-		// now ensure that isDescribedBy is set
-		model.createStatement(res, ORE.isDescribedBy, ((ResourceMapJena) rem).getResource());
+		// add the resource map to this aggregation, which will set all of our relevant relations
+		this.addResourceMapURI(uri);
 
 		return rem;
 	}

@@ -35,10 +35,33 @@
  */
 package org.dspace.foresite.rdfa;
 
+import org.dspace.foresite.OREParser;
+import org.dspace.foresite.ResourceMap;
+import org.dspace.foresite.OREParserException;
+
+import java.io.InputStream;
+import java.net.URI;
+import java.util.Properties;
+
 /**
  * @Author Richard Jones
  */
-public class RDFaOREParser
+public class RDFaOREParser implements OREParser
 {
+	public ResourceMap parse(InputStream is)
+			throws OREParserException
+	{
+		return null;
+	}
 
+	public ResourceMap parse(InputStream is, URI uri)
+			throws OREParserException
+	{
+		return null;
+	}
+
+	public void configure(Properties properties)
+	{
+		
+	}
 }

@@ -45,8 +45,8 @@ import org.dspace.foresite.OREVocabulary;
 import org.dspace.foresite.OREException;
 import org.dspace.foresite.AggregatedResource;
 import org.dspace.foresite.ReMSerialisation;
-import org.dspace.foresite.Triple;
 import org.dspace.foresite.Proxy;
+import org.dspace.foresite.Vocab;
 import org.jdom.Element;
 import org.jdom.Namespace;
 import org.jdom.output.XMLOutputter;
@@ -58,11 +58,8 @@ import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.Properties;
-import java.text.SimpleDateFormat;
-import java.text.ParseException;
 
 import com.sun.syndication.io.XmlReader;
 import com.sun.syndication.io.FeedException;
@@ -170,7 +167,7 @@ public class AtomOREParser implements OREParser
             for (Category category : categories)
             {
 				// exclude the mandatory Aggregation, as this exists by default in the model
-				String aggURI = OREVocabulary.aggregation.getUri().toString();
+				String aggURI = Vocab.ore_Aggregation.uri().toString();
                 if (!aggURI.equals(category.getTerm()))
                 {
                     // the @term specifies the rdf:type relation
@@ -179,11 +176,15 @@ public class AtomOREParser implements OREParser
 					agg.addType(typeURI);
 
 					// FIXME: we need to find a nice simple way of doing this
+					// FIXME: actually, don't we just want to build this into the model
+					// 			in all cases?
 					// the @scheme specifies the rdfs:isDefinedBy relation of the term
 					// Triple triple = OREFactory.createTriple(typeURI, new URI(""));
 
 					// FIXME: we need to find a nice simple way of doing this
 					// the @label specifies the rdfs:label relation
+					String label = category.getLabel();
+					agg.createTriple(Vocab.rdfs_label, label);
 				}
             }
 

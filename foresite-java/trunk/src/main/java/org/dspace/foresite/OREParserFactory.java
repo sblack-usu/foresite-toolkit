@@ -37,6 +37,7 @@ package org.dspace.foresite;
 
 import org.dspace.foresite.atom.AtomOREParser;
 import org.dspace.foresite.jena.JenaOREParser;
+import org.dspace.foresite.rdfa.RDFaOREParser;
 
 import java.util.Properties;
 
@@ -79,10 +80,22 @@ public class OREParserFactory
             s.configure(properties);
             return s;
         }
-        if ("ATOM-1.0".equals(desc))
+		if ("TURTLE".equals(desc))
+		{
+			Properties properties = new Properties();
+            properties.setProperty("type", "TURTLE");
+            OREParser s = new JenaOREParser();
+            s.configure(properties);
+            return s;
+		}
+		if ("ATOM-1.0".equals(desc))
         {
             return new AtomOREParser();
         }
-        return null;
+		if ("RDFa".equals(desc))
+		{
+			return new RDFaOREParser();
+		}
+		return null;
     }
 }
