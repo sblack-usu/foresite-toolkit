@@ -148,4 +148,14 @@ public class OREFactory
 		triple.relate(pred, object);
 		return triple;
 	}
+
+	public static Triple createTriple(URI subject, URI relation, Object literal)
+			throws OREException
+	{
+		Triple triple = new TripleJena();
+		triple.initialise(subject);
+		Predicate pred = new Predicate(relation);
+		triple.relate(pred, literal);
+		return triple;
+	}
 }

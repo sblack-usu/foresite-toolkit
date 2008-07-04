@@ -47,6 +47,7 @@ import org.dspace.foresite.Agent;
 import org.dspace.foresite.AggregatedResource;
 import org.dspace.foresite.Proxy;
 import org.dspace.foresite.ORESerialiserFactory;
+import org.dspace.foresite.TripleSelector;
 import org.dspace.foresite.jena.AggregationJena;
 import org.jdom.Element;
 import org.jdom.Namespace;
@@ -59,6 +60,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Date;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.io.StringWriter;
 import java.io.IOException;
 import java.io.ByteArrayInputStream;
@@ -69,11 +71,17 @@ import com.sun.syndication.feed.atom.Generator;
 import com.sun.syndication.feed.atom.Entry;
 import com.sun.syndication.feed.atom.Category;
 import com.sun.syndication.feed.atom.Person;
+import com.sun.syndication.feed.atom.Content;
+import com.sun.syndication.feed.synd.SyndFeed;
 import com.sun.syndication.io.WireFeedOutput;
 import com.sun.syndication.io.FeedException;
+import com.sun.syndication.io.SyndFeedOutput;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.vocabulary.DC;
+import com.hp.hpl.jena.vocabulary.DCTerms;
+import com.hp.hpl.jena.vocabulary.RDFS;
 
 /**
  * @Author Richard Jones
@@ -99,18 +107,13 @@ public class AtomORESerialiser implements ORESerialiser
 		{
 			// create a copy of the resource map to work on
 			ResourceMap rem = resourceMap.copy();
+			Aggregation agg = rem.getAggregation();
+			URI uri_r = rem.getURI();
+			URI uri_a = agg.getURI();
 
 			// The method we are going to use is to de-construct the resource
 			// map as we turn it into an atom feed
 			/////////////////////////////////////////////////////////////////
-
-			// get the relevant info from the REM
-			URI uri_r = rem.getURI();
-			Aggregation agg = rem.getAggregation();
-			URI uri_a = agg.getURI();
-			List<URI> similarTo = agg.getSimilarTo();
-			List<ReMSerialisation> otherRems = agg.getReMSerialisations();
-			List<AggregatedResource> ars = agg.getAggregatedResources();
 
 			// build the ATOM objects
 			Feed atom = new Feed("atom_1.0");
@@ -119,6 +122,7 @@ public class AtomORESerialiser implements ORESerialiser
 			List<Link> alternates = new ArrayList<Link>();
 			List<Element> foreign = new ArrayList<Element>();
 			List<Category> cats = new ArrayList<Category>();
+			List<Person> contribs = new ArrayList<Person>();
 
 			// Do the cross-walk
 			////////////////////
@@ -126,25 +130,51 @@ public class AtomORESerialiser implements ORESerialiser
 			// atom:id :: Aggregation URI
 			atom.setId(uri_a.toString());
 
-			// atom:link@rel=related :: ore:similarTo (& rdfs:seeAlso)
+			// atom:link@rel=related :: ore:similarTo
+			List<URI> similarTo = agg.getSimilarTo();
 			for (URI similar : similarTo)
 			{
 				// create the link
 				Link link = new Link();
 				link.setRel("related");
 				link.setHref(similar.toString());
+
+				TripleSelector typeSel = new TripleSelector(similar, new URI(DC.format.getURI()), null);
+				TripleSelector langSel = new TripleSelector(similar, new URI(DC.language.getURI()), null);
+				TripleSelector titleSel = new TripleSelector(similar, new URI(DC.title.getURI()), null);
+
+				List<Triple> typeT = agg.listAllTriples(typeSel);
+				List<Triple> langT = agg.listAllTriples(langSel);
+				List<Triple> titleT = agg.listAllTriples(titleSel);
+
+				if (typeT != null && typeT.size() > 0)
+				{
+					Triple typeTriple = typeT.get(0);
+					link.setType(typeTriple.isLiteral() ? typeTriple.getObjectLiteral() : typeTriple.getObjectURI().toString());
+					agg.removeTriple(typeTriple);
+				}
+
+				if (langT != null && langT.size() > 0)
+				{
+					Triple langTriple = langT.get(0);
+					link.setHreflang(langTriple.isLiteral() ? langTriple.getObjectLiteral() : langTriple.getObjectURI().toString());
+					agg.removeTriple(langTriple);
+				}
+
+				if (titleT != null && titleT.size() > 0)
+				{
+					Triple titleTriple = titleT.get(0);
+					link.setTitle(titleTriple.isLiteral() ? titleTriple.getObjectLiteral() : titleTriple.getObjectURI().toString());
+					agg.removeTriple(titleTriple);
+				}
+
 				relateds.add(link);
-
-				// FIXME: need to include the following information
-				// @type = URI-similar dc:format "mime"
-				// @hreflang = URI-similar dc:language "lang"
-				// @title = URI-similar dc:title "title"
-
-				// remove these links from the resource map
-				agg.clearSimilarTo();
 			}
+			// remove these links from the model
+			agg.clearSimilarTo();
 
 			// atom:link@rel=alternate :: ore:isDescribedBy for other Resource Maps
+			List<ReMSerialisation> otherRems = agg.getReMSerialisations();
 			for (ReMSerialisation serial : otherRems)
 			{
 				if (!serial.getURI().equals(uri_r))
@@ -152,21 +182,84 @@ public class AtomORESerialiser implements ORESerialiser
 					Link link = new Link();
 					link.setRel("alternate");
 					link.setHref(serial.getURI().toString());
-					alternates.add(link);
 
-					// FIXME: need to include the following information
-					// @type = URI-alt dc:format "mime"
-					// @hreflang = URI-alt dc:language "lang"
-					// @title = URI-alt dc:title "title"
+					TripleSelector typeSel = new TripleSelector(serial.getURI(), new URI(DC.format.getURI()), null);
+					TripleSelector langSel = new TripleSelector(serial.getURI(), new URI(DC.language.getURI()), null);
+					TripleSelector titleSel = new TripleSelector(serial.getURI(), new URI(DC.title.getURI()), null);
+
+					List<Triple> typeT = agg.listAllTriples(typeSel);
+					List<Triple> langT = agg.listAllTriples(langSel);
+					List<Triple> titleT = agg.listAllTriples(titleSel);
+
+					if (typeT != null && typeT.size() > 0)
+					{
+						Triple typeTriple = typeT.get(0);
+						link.setType(typeTriple.isLiteral() ? typeTriple.getObjectLiteral() : typeTriple.getObjectURI().toString());
+						agg.removeTriple(typeTriple);
+					}
+
+					if (langT != null && langT.size() > 0)
+					{
+						Triple langTriple = langT.get(0);
+						link.setHreflang(langTriple.isLiteral() ? langTriple.getObjectLiteral() : langTriple.getObjectURI().toString());
+						agg.removeTriple(langTriple);
+					}
+
+					if (titleT != null && titleT.size() > 0)
+					{
+						Triple titleTriple = titleT.get(0);
+						link.setTitle(titleTriple.isLiteral() ? titleTriple.getObjectLiteral() : titleTriple.getObjectURI().toString());
+						agg.removeTriple(titleTriple);
+					}
+
+					alternates.add(link);
 				}
 
 				// clear the list of rem serialisations
 				agg.clearReMSerialisations();
 			}
 
-			// FIXME: the rights are not URIs they are strings!  Do we need to change the model?
+
 			// atom:link@rel=license :: rights URI
-			// agg.getRights();
+			List<URI> rights = agg.getRights();
+			for (URI right : rights)
+			{
+				Link link = new Link();
+				link.setRel("license");
+				link.setHref(right.toString());
+
+				TripleSelector typeSel = new TripleSelector(right, new URI(DC.format.getURI()), null);
+				TripleSelector langSel = new TripleSelector(right, new URI(DC.language.getURI()), null);
+				TripleSelector titleSel = new TripleSelector(right, new URI(DC.title.getURI()), null);
+
+				List<Triple> typeT = agg.listAllTriples(typeSel);
+				List<Triple> langT = agg.listAllTriples(langSel);
+				List<Triple> titleT = agg.listAllTriples(titleSel);
+
+				if (typeT != null && typeT.size() > 0)
+				{
+					Triple typeTriple = typeT.get(0);
+					link.setType(typeTriple.isLiteral() ? typeTriple.getObjectLiteral() : typeTriple.getObjectURI().toString());
+					agg.removeTriple(typeTriple);
+				}
+
+				if (langT != null && langT.size() > 0)
+				{
+					Triple langTriple = langT.get(0);
+					link.setHreflang(langTriple.isLiteral() ? langTriple.getObjectLiteral() : langTriple.getObjectURI().toString());
+					agg.removeTriple(langTriple);
+				}
+
+				if (titleT != null && titleT.size() > 0)
+				{
+					Triple titleTriple = titleT.get(0);
+					link.setTitle(titleTriple.isLiteral() ? titleTriple.getObjectLiteral() : titleTriple.getObjectURI().toString());
+					agg.removeTriple(titleTriple);
+				}
+
+				alternates.add(link);
+			}
+			agg.clearRights();
 
 			// atom:link@rel=self :: REM URI
 			Link self = new Link();
@@ -176,7 +269,7 @@ public class AtomORESerialiser implements ORESerialiser
 
 			// atom:icon :: URI-A foaf:logo URI-icon
 			// FIXME: for the time being just use the default icon from openarchives
-			atom.setIcon("http://www.openarchives.org/ore/favicon.ico");
+			atom.setIcon("http://www.openarchives.org/ore/favicon.ico"); // DEBUG
 
 			// atom:generator :: REM creator (arbitrary)
 			// all creators will be duplicated when serialised as RDF
@@ -200,23 +293,58 @@ public class AtomORESerialiser implements ORESerialiser
 					generator.setUrl(creatorURI.toString());
 				}
 
-				atom.setGenerator(generator);
+				atom.setGenerator(generator); // DEBUG
 			}
 
-			// FIXME: don't have the facilities in the model yet to handle this information
 			// atom:contributor :: URI-A dcterms:contributor
+			List<Agent> contributors = agg.getAgents(new URI(DC.contributor.getURI()));
+			for (Agent contributor : contributors)
+			{
+				List<String> names = contributor.getNames();
+				List<URI> mboxes = contributor.getMboxes();
+				URI uri = contributor.getURI();
 
-			// FIXME: implement this based on triple selector
+				Person contrib = new Person();
+
+				StringBuilder sb = new StringBuilder();
+				for (String name : names)
+				{
+					sb.append(name + " ");
+				}
+				contrib.setName(sb.toString());
+
+				if (uri != null)
+				{
+					contrib.setUrl(uri.toString());
+				}
+
+				if (mboxes != null)
+				{
+					contrib.setEmail(mboxes.get(0).toString());
+				}
+				contribs.add(contrib);
+			}
+			atom.setContributors(contribs);
+
 			// atom:subtitle :: URI-A dc:description "subtitle"
+			TripleSelector subTitleSel = new TripleSelector(uri_a, new URI(DC.description.getURI()), null);
+			List<Triple> subTriples = agg.listAllTriples(subTitleSel);
+			if (subTriples != null)
+			{
+				Content subtitle = new Content();
+				subtitle.setValue(subTriples.get(0).getObjectLiteral());
+				atom.setSubtitle(subtitle);
+				agg.removeTriple(subTriples.get(0));
+			}
 
 			// atom:updated :: REM modified date
 			Date modified = rem.getModified();
-			atom.setUpdated(modified);
+			atom.setUpdated(modified); // DEBUG
 			rem.removeModified(); // clear the modification date for later RDF serialisation
 
 			// atom:rights :: REM Rights
-			String rights = rem.getRights();
-			atom.setRights(rights);
+			String remRights = rem.getRights();
+			atom.setRights(remRights); // DEBUG
 			rem.removeRights(); // clear the rights for later RDF serialisation
 
 			// atom:author :: Aggregation creators
@@ -249,6 +377,7 @@ public class AtomORESerialiser implements ORESerialiser
 				authors.add(author);
 			}
 			atom.setAuthors(authors);
+			// FIXME: this doesn't appear to be working!
 			agg.clearCreators(); // remove the creators for later RDF serialisation
 
 			// atom:category :: all rdf:type elements (Aggregation type mandatory)
@@ -257,12 +386,33 @@ public class AtomORESerialiser implements ORESerialiser
 			{
 				Category category = new Category();
 				category.setTerm(type.toString());
-				category.setScheme("http://www.openarchives.org/ore/terms/");
-				// FIXME: this does not take into account relations of the form: URI-A rdfs:label "label"
+
+				// if this is the default type, then put in the bits that we know about
 				if (type.toString().equals("http://www.openarchives.org/ore/terms/Aggregation"))
 				{
+					category.setScheme("http://www.openarchives.org/ore/terms/");
 					category.setLabel("Aggregation");
 				}
+				else
+				{
+					// otherwise, extract the information from the graph
+					TripleSelector labelSel = new TripleSelector(type, new URI(RDFS.label.getURI()), null);
+					List<Triple> labels = agg.listAllTriples(labelSel);
+					if (labels != null && labels.size() > 0)
+					{
+						category.setLabel(labels.get(0).getObjectLiteral());
+						agg.removeTriple(labels.get(0));
+					}
+
+					TripleSelector schemeSel = new TripleSelector(type, new URI(RDFS.isDefinedBy.getURI()), null);
+					List<Triple> schemes = agg.listAllTriples(schemeSel);
+					if (schemes != null && schemes.size() > 0)
+					{
+						category.setScheme(schemes.get(0).getObjectURI().toString());
+						agg.removeTriple(schemes.get(0));
+					}
+				}
+				
 				cats.add(category);
 			}
 			agg.clearTypes();  // clear the types in preparation for RDF serialisation
@@ -280,6 +430,7 @@ public class AtomORESerialiser implements ORESerialiser
 			}
 
 			// atom:entry :: Aggregated Resource
+			List<AggregatedResource> ars = agg.getAggregatedResources();
 			for (AggregatedResource ar : ars)
 			{
 				// generate the entry
@@ -319,6 +470,7 @@ public class AtomORESerialiser implements ORESerialiser
 
 			// write the ATOM feed document to a string
 			StringWriter writer = new StringWriter();
+			// SyndFeedOutput output = new SyndFeedOutput();
 			WireFeedOutput output = new WireFeedOutput();
 			output.output(atom, writer);
 
@@ -339,6 +491,10 @@ public class AtomORESerialiser implements ORESerialiser
 			throw new ORESerialiserException(e);
 		}
 		catch (FeedException e)
+		{
+			throw new ORESerialiserException(e);
+		}
+		catch (URISyntaxException e)
 		{
 			throw new ORESerialiserException(e);
 		}

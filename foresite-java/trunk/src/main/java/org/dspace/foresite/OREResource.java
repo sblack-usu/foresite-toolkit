@@ -218,7 +218,19 @@ public interface OREResource
 	 */
 	Triple createTriple(Vocab pred, Object literal) throws OREException;
 
-    ////////////////////////////////////////////////////////////
+	/**
+	 * Implementation specific createTriple method, allowing it to do whatever
+	 * it needs in order to create a triple
+	 * 
+	 * @param subject
+	 * @param predicate
+	 * @param object
+	 * @return
+	 * @throws OREException
+	 */
+	// Triple createTriple(Object subject, Object predicate, Object object) throws OREException;
+
+	////////////////////////////////////////////////////////////
 	// methods to deal with OREResource type information
 	////////////////////////////////////////////////////////////
 

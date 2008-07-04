@@ -57,6 +57,10 @@ import java.util.List;
 import java.io.InputStream;
 import java.io.FileInputStream;
 
+import com.hp.hpl.jena.vocabulary.RDFS;
+import com.hp.hpl.jena.vocabulary.RDF;
+import com.hp.hpl.jena.vocabulary.DC;
+
 /**
  * @Author Richard Jones
  */
@@ -72,11 +76,11 @@ public class ORETest
         // test.rdfxmlAbbrevWriting();
         // test.rdfaWriting();
         // test.basicReading();
-        test.atomParsing();
+        // test.atomParsing();
         // test.clearingStuff();
         // test.rdfxmlParsing();
         // test.querying();
-		// test.atomWriting();
+		test.atomWriting();
 		// test.turtleWriting();
 	}
 
@@ -229,32 +233,97 @@ public class ORETest
     private ResourceMap testResourceMap()
             throws Exception
     {
-        Agent agent = OREFactory.createAgent();
+		// create some agents
+		/////////////////////
+
+		Agent agent = OREFactory.createAgent();  // blank node
         agent.addName("Richard");
         agent.addMbox(new URI("mailto:richard.d.jones@hp.com"));
-        // agent.addSeeAlso(new URI("http://chronicles-of-richard.blogspot.com/"));
-        Predicate pred2 = new Predicate();
-        pred2.setURI(new URI("http://agent.triple.1/"));
-//        agent.createTriple(pred2, new URI("http://agent.relationship.1"));
-//        agent.createTriple(pred2, new URI("http://agent.relationship.2"));
 
-        Agent agent2 = OREFactory.createAgent();
+		Agent agent2 = OREFactory.createAgent(new URI("http://www.rich.com/"));
         agent2.addName("Rich");
         agent2.addMbox(new URI("mailto:rich.d.jones@gmail.com"));
-        // agent2.addSeeAlso(new URI("http://www.hp.com/"));
-        Predicate pred3 = new Predicate();
-        pred3.setURI(new URI("http://agent.triple.2/"));
-//         agent2.createTriple(pred2, new URI("http://agent.relationship.3"));
-//        agent2.createTriple(pred3, new URI("http://agent.relationship.4"));
 
-        Agent agent3 = OREFactory.createAgent();
+		Agent agent3 = OREFactory.createAgent(new URI("http://www.ed.com/"));
         agent3.addName("Ed");
         agent3.addMbox(new URI("mailto:ed@ed.ed"));
-        // agent3.addSeeAlso(new URI("http://ed.ed.ed/"));
 
 		Agent agent4 = OREFactory.createAgent(new URI("mailto:agent@notblanknode.com"));
 		agent4.addMbox(new URI("mailto:agent@notblanknode.com"));
 		agent4.addName("No Blank Node Here");
+
+		// create some triples that we will want to use later
+		/////////////////////////////////////////////////////
+		Triple monkeyTypeDef = OREFactory.createTriple(new URI("http://purl.org/dc/terms/Monkey"), new URI(RDFS.isDefinedBy.getURI()), new URI("http://purl.org/dc/terms/"));
+		Triple monkeyLabel = OREFactory.createTriple(new URI("http://purl.org/dc/terms/Monkey"), new URI(RDFS.label.getURI()), "Monkey");
+		Triple similarType = OREFactory.createTriple(new URI("http://uri.that.im/similar/to"), new URI(DC.format.getURI()), "appliation/octet-stream");
+		Triple similarLang = OREFactory.createTriple(new URI("http://uri.that.im/similar/to"), new URI(DC.language.getURI()), "en");
+		Triple similarTitle = OREFactory.createTriple(new URI("http://uri.that.im/similar/to"), new URI(DC.title.getURI()), "Similar Item");
+		Triple remsLang = OREFactory.createTriple(new URI("http://atom.serialisation/rem"), new URI(DC.language.getURI()), "fr");
+		Triple remsTitle = OREFactory.createTriple(new URI("http://atom.serialisation/rem"), new URI(DC.title.getURI()), "Other Resource Map");
+		Triple rightsType = OREFactory.createTriple(new URI("http://my.rights.com/"), new URI(DC.format.getURI()), "appliation/octet-stream");
+		Triple rightsLang = OREFactory.createTriple(new URI("http://my.rights.com/"), new URI(DC.language.getURI()), "no");
+		Triple rightsTitle = OREFactory.createTriple(new URI("http://my.rights.com/"), new URI(DC.title.getURI()), "Aggregation Rights");
+
+		// create some resource map serialisations
+		//////////////////////////////////////////
+
+		ReMSerialisation serialisation = new ReMSerialisation("application/atom+xml", new URI("http://atom.serialisation/rem"));
+        ReMSerialisation serialisation2 = new ReMSerialisation("text/plain+n-triple", new URI("http://n.triple.serial/ntriple"));
+
+		// create our aggregation and resource map
+		//////////////////////////////////////////
+		Aggregation aggregation = OREFactory.createAggregation(new URI("http://some.uri.com/my/aggregation"));
+		ResourceMap rem = aggregation.createResourceMap(new URI("http://some.uri.com/my/resource/map"));
+
+		// add properties of the aggregation
+		////////////////////////////////////
+
+		aggregation.addCreator(agent3);
+		aggregation.addCreator(agent);
+		aggregation.addTitle("This is the aggregation of Richard");
+		aggregation.addType(new URI("http://purl.org/dc/terms/Monkey"));
+		aggregation.addTriple(monkeyTypeDef);
+		aggregation.addTriple(monkeyLabel);
+		aggregation.addSimilarTo(new URI("http://uri.that.im/similar/to"));
+		aggregation.addTriple(similarType);
+		aggregation.addTriple(similarLang);
+		aggregation.addTriple(similarTitle);
+		aggregation.addSimilarTo(new URI("http://uri.that.im/similar/to2"));
+		aggregation.addReMSerialisation(serialisation);
+		aggregation.addTriple(remsLang);
+		aggregation.addTriple(remsTitle);
+		aggregation.addReMSerialisation(serialisation2);
+		aggregation.addRights(new URI("http://my.rights.com/"));
+		aggregation.addTriple(rightsType);
+		aggregation.addTriple(rightsLang);
+		aggregation.addTriple(rightsTitle);
+		aggregation.addAgent(new URI(DC.contributor.getURI()), agent2);
+		aggregation.addAgent(new URI(DC.contributor.getURI()), agent);
+		aggregation.createTriple(new URI(DC.description.getURI()), "This is a subtitle");
+		aggregation.setModified(new Date());
+        aggregation.setCreated(new Date());
+
+		// add properties to the resource map
+		/////////////////////////////////////
+
+		rem.setModified(new Date());
+		rem.setRights("(c) 2008 Richard Jones");
+
+		// where in ATOM serialisation?
+		rem.setCreated(new Date());
+        rem.addCreator(agent);
+        rem.addCreator(agent2);
+		rem.addCreator(agent4);
+		rem.setAuthoritative(true);
+
+		// not finished yet...
+		
+		Predicate pred2 = new Predicate();
+        pred2.setURI(new URI("http://agent.triple.1/"));
+
+        Predicate pred3 = new Predicate();
+        pred3.setURI(new URI("http://agent.triple.2/"));
 
 		AggregatedResource ar = OREFactory.createAggregatedResource(new URI("http://my.aggregated.res/pdf.pdf"));
         ar.addAggregation(new URI("http://some.other.agg/here"));
@@ -266,39 +335,13 @@ public class ORETest
         ar2.addAggregation(new URI("http://yet.another.agg/there"));
         ar2.createTriple(pred4, new URI("http://aggregated.resource.relation/2"));
 
-        ReMSerialisation serialisation = new ReMSerialisation("text/xml+atom", new URI("http://atom.serialisation/rem"));
-        ReMSerialisation serialisation2 = new ReMSerialisation("text/n-triple", new URI("http://n.triple.serial/ntriple"));
-
-        Aggregation aggregation = OREFactory.createAggregation(new URI("http://some.uri.com/my/aggregation"));
-        aggregation.addRights("(c) 2009 Someone Else");
-        aggregation.setCreated(new Date());
-        aggregation.setModified(new Date());
-        aggregation.addCreator(agent3);
-        aggregation.addTitle("This is the aggregation of Richard");
-        aggregation.addSimilarTo(new URI("http://uri.that.im/similar/to"));
-        aggregation.addReMSerialisation(serialisation);
-        aggregation.addReMSerialisation(serialisation2);
         aggregation.addAggregatedResource(ar);
         aggregation.addAggregatedResource(ar2);
         aggregation.createProxy(new URI("http://my.proxy/"), ar.getURI());
 
-        Predicate pred1 = new Predicate();
-        pred1.setURI(new URI("http://www.other.predicate/namespace/IsABitLikeSometimes"));
-        Triple triple1 = aggregation.createTriple(pred1, new URI("http://some.external.resource/"));
-
         Proxy proxy = OREFactory.createProxy(new URI("http://other.proxy/"));
         proxy.setProxyForURI(ar2.getURI());
         aggregation.addProxy(proxy);
-
-        ResourceMap rem = OREFactory.createResourceMap(new URI("http://some.uri.com/my/resource/map"));
-        rem.setCreated(new Date());
-        rem.setModified(new Date());
-        rem.setRights("(c) 2008 Richard Jones");
-        rem.addCreator(agent);
-        rem.addCreator(agent2);
-        rem.setAggregation(aggregation);
-		rem.addCreator(agent4);
-		rem.setAuthoritative(true);
 
 		Predicate pred = new Predicate();
         pred.setURI(new URI("http://www.my.predicate/namespace/Relationship"));
@@ -332,17 +375,10 @@ public class ORETest
             {
                 System.out.println("MBox: " + mbox);
             }
-
-			/*
-			List<URI> seeAlso = creator.getSeeAlso();
-            for (URI sa : seeAlso)
-            {
-                System.out.println("See Also: " + sa.toString());
-            }*/
         }
 
         Aggregation aggregation = rem.getAggregation();
-        List<String> rights = aggregation.getRights();
+        List<URI> rights = aggregation.getRights();
         List<String> titles = aggregation.getTitles();
         List<URI> types = aggregation.getTypes();
         List<Agent> aCreators = aggregation.getCreators();
@@ -354,9 +390,9 @@ public class ORETest
         System.out.println("URI: " + aggregation.getURI().toString());
         System.out.println("Created: " + aggregation.getCreated());
         System.out.println("Modified: " + aggregation.getModified());
-        for (String right : rights)
+        for (URI right : rights)
         {
-            System.out.println("Rights: " + right);
+            System.out.println("Rights: " + right.toString());
         }
         for (String title : titles)
         {
@@ -381,13 +417,6 @@ public class ORETest
             {
                 System.out.println("MBox: " + mbox);
             }
-
-			/*
-			List<URI> seeAlso = creator.getSeeAlso();
-            for (URI sa : seeAlso)
-            {
-                System.out.println("See Also: " + sa.toString());
-            }*/
         }
 
         for (AggregatedResource ar : ars)

@@ -60,13 +60,13 @@ public interface Aggregation extends OREResource
 
 	// methods to deal with rights for the Aggregation
 
-	List<String> getRights();
+	List<URI> getRights() throws OREException;
 
-    void setRights(List<String> rights);
+    void setRights(List<URI> rights) throws OREException;
 
-    void addRights(String rights);
+    void addRights(URI rights) throws OREException;
 
-    void clearRights();
+    void clearRights() throws OREException;
 
 	// methods to deal with Aggregation title metadata
 

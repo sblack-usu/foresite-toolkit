@@ -218,31 +218,39 @@ public class AggregationJena extends OREResourceJena implements Aggregation
         res.addProperty(DCTerms.modified, model.createTypedLiteral(date, JenaOREConstants.dateTypedLiteral));
     }
 
-    public List<String> getRights()
-    {
-        List<String> rights = new ArrayList<String>();
-        StmtIterator itr = res.listProperties(DC.rights);
-        while (itr.hasNext())
-        {
-            Statement statement = itr.nextStatement();
-            String right = ((Literal) statement.getObject()).getLexicalForm();
-            rights.add(right);
-        }
-        return rights;
-    }
+    public List<URI> getRights()
+			throws OREException
+	{
+		try
+		{
+			List<URI> rights = new ArrayList<URI>();
+			StmtIterator itr = res.listProperties(DC.rights);
+			while (itr.hasNext())
+			{
+				Statement statement = itr.nextStatement();
+				Resource right = (Resource) statement.getObject();
+				rights.add(new URI(right.getURI()));
+			}
+			return rights;
+		}
+		catch (URISyntaxException e)
+		{
+			throw new OREException(e);
+		}
+	}
 
-    public void setRights(List<String> rights)
+    public void setRights(List<URI> rights)
     {
         this.clearRights();
-        for (String right : rights)
+        for (URI right : rights)
         {
             this.addRights(right);
         }
     }
 
-    public void addRights(String rights)
+    public void addRights(URI rights)
     {
-        res.addProperty(DC.rights, model.createTypedLiteral(rights));
+        res.addProperty(DC.rights, model.createResource(rights.toString()));
     }
 
     public void clearRights()
@@ -320,8 +328,8 @@ public class AggregationJena extends OREResourceJena implements Aggregation
             while (itr.hasNext())
             {
                 Statement statement = itr.nextStatement();
-                RDFNode node = statement.getObject();
-                similars.add(new URI(((Literal) node).getLexicalForm()));
+                Resource node = (Resource) statement.getObject();
+                similars.add(new URI(node.getURI()));
             }
             return similars;
         }
@@ -342,7 +350,7 @@ public class AggregationJena extends OREResourceJena implements Aggregation
 
     public void addSimilarTo(URI similarTo)
     {
-        res.addProperty(ORE.similarTo, model.createTypedLiteral(similarTo));
+        res.addProperty(ORE.similarTo, model.createResource(similarTo.toString()));
     }
 
     public void clearSimilarTo()
@@ -605,17 +613,19 @@ public class AggregationJena extends OREResourceJena implements Aggregation
         resource.addProperty(ORE.describes, res);
     }*/
 
-	// FIXME: I'm not 100% sure that this method is going to work as desired
 	public void clearReMSerialisations()
     {
         StmtIterator itr = res.listProperties(ORE.isDescribedBy);
-        while (itr.hasNext())
+		// FIXME: this does not remove all the related resources from the graph when the resource map serialisations
+		// are removed.  We ideally need a general graph handling method for this.
+		/*
+		while (itr.hasNext())
         {
             Statement statement = itr.nextStatement();
             Resource resource = (Resource) statement.getObject();
             StmtIterator itr2 = resource.listProperties();
             model.remove(itr2);
-        }
+        }*/
         model.remove(itr);
     }
 
