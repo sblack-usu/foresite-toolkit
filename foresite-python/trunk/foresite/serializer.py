@@ -99,7 +99,7 @@ class ORESerializer(object):
 
 class RdfLibSerializer(ORESerializer):
 
-    def serialize(self, rem):
+    def serialize(self, rem, page=-1):
         g = self.merge_graphs(rem)
         data = g.serialize(format=self.format)
         uri = str(rem._uri_)
@@ -130,7 +130,6 @@ class AtomSerializer(ORESerializer):
             sg += at.graph
         for a in what.agents:
             sg += a.graph
-
 
         for a in what.type:                
             for b in sg.objects(a, namespaces['rdfs']['isDefinedBy']):
@@ -181,6 +180,10 @@ class AtomSerializer(ORESerializer):
                 for a in what._ore.isAggregatedBy:
                     sg.remove((what.uri, namespaces['ore']['isAggregatedBy'], a))
                 self.done_triples = []
+                # and add in proxy info
+                sg += what._currProxy_.graph
+                for a in what._currProxy_._agents_:
+                    sg += a.graph
 
         elif isinstance(what, ResourceMap):
 
@@ -254,7 +257,7 @@ class AtomSerializer(ORESerializer):
         if titls:
             e.set('title', str(titls[0]))
 
-    def serialize(self, rem):
+    def serialize(self, rem, page=-1):
         aggr = rem._aggregation_
         # Check entire graph is connected
         g = self.merge_graphs(rem)
@@ -385,7 +388,7 @@ class AtomSerializer(ORESerializer):
                 self.make_agent(e, agent)
             if res._dcterms.abstract:
                 e = SubElement(entry, 'summary')
-                e.text = str(res._dc.description[0])
+                e.text = str(res._dcterms.abstract[0])
 
             # Not sure about this at object level?
             for oa in res._ore.isAggregatedBy:
@@ -395,16 +398,17 @@ class AtomSerializer(ORESerializer):
             e = SubElement(entry, 'updated')
             e.text = now()
 
-            #e = SubElement(entry, 'updated')
-            #e.text = proxy._dcterms.modified[0]
-            #if proxy._dc.modified != proxy._dc.created:
-            #    e = SubElement(entry, 'published')
-            #    e.text = proxy._dcterms.created[0]
+            # Put in Proxy info
+            # ORE DISCUSS:  Is updated == proxy's dcterms:modified?
+            #               Is published == proxy's dcterms:created?
 
             if proxy._ore.lineage:
                 e = SubElement(entry, 'link', rel="via", href=str(proxy._ore.lineage[0]))
 
+            # Blech!
+            res._currProxy_ = proxy
             self.generate_rdf(entry, res)
+            res._currProxy_ = None
 
         data = etree.tostring(root)
         data = data.replace('\n', '')

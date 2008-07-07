@@ -3,6 +3,7 @@ import os
 import urllib
 from rdflib import ConjunctiveGraph, URIRef, BNode, Literal
 from utils import *
+from StringIO import StringIO
 
 all_objects = {}
 
@@ -157,6 +158,10 @@ class ResourceMap(OREResource):
         self.add_triple(at)
 
     def register_serializer(self, serializer):
+        # Deprecated
+        self.register_serialization(serializer)
+
+    def register_serialization(self, serializer):
         # DISCUSS: Should we allow multiple formats?
         # rdf/xml IS both text/xml, application/rdf+xml
         if self.serializer:
@@ -166,7 +171,7 @@ class ResourceMap(OREResource):
             self.format = serializer.mimeType
         self._serializer_ = serializer
     
-    def get_serialization(self):
+    def get_serialization(self, page=-1):
         return self._serializer_.serialize(self)
 
     def set_aggregation(self, agg):
@@ -328,7 +333,7 @@ class Aggregation(OREResource):
                 setattr(rem, k, v)
         return rem
 
-    def get_serialization(self, uri=''):
+    def get_serialization(self, uri='', page=-1):
         if not uri:
             rem = self.resourceMaps[0]
         else:
@@ -385,7 +390,7 @@ class ArbitraryResource(OREResource):
     pass
 
 
-class ReMDocument(object):    
+class ReMDocument(StringIO):    
     # Serialisation of objects
     uri = ""
     mimeType = ""
@@ -411,4 +416,4 @@ class ReMDocument(object):
                 raise OreException('ReMDocument must either have data or filename')
         self.mimeType = mimeType
         self.format = format
-        
+        StringIO.__init__(self, self.data)
