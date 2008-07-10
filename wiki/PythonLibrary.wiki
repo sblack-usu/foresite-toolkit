@@ -141,6 +141,13 @@ And then treat them like any object
     >>> something._rdf.type = URIRef('http://somewhere.org/class/something')
 }}}
 
+And finally, some options that can be set to change the behaviour of the library:
+
+{{{
+     >>> utils.assignAgentUri = True   # instead of blank node, assign UUID URI
+     >>> utils.proxyType = 'UUID'  # instead of oreproxy.org, assign UUID proxy
+}}}
+
 ----
 ==Gotchas to Avoid==
 
