@@ -3,8 +3,10 @@
 
 Documentation for the Python library.
 
-Usage
+==Usage==
 -----
+
+Import everything
 {{{
     >>> from foresite import *
     >>> from rdflib import URIRef
