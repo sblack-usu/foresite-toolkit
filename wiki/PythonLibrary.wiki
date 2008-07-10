@@ -5,7 +5,9 @@ Documentation for the Python library.
 
 ==Introduction==
 
-The library requires two prerequisites rdflib and lxml.  These are both available in pypi, and hence the setup.py should install them if you don't have them already.
+The library requires two prerequisites rdflib and lxml.  These are both available in pypi, and hence the setup.py should install them if you don't have them already.  To install, the regular mantra should work:
+
+`python ./setup.py install`
 
 The main goal of the library is to provide an intuitive object oriented layer over top of the graph storage system (rdflib) to make ORE 'objects' more easy to work with at a programmatic level.
 
