@@ -96,7 +96,7 @@ And have their own serializers:
     >>> print remdoc2.data
     <div id="ore:ResourceMap" xmlns...
 }}}
-
+Possible values for RdfLibSerializer:  rdf (rdf/xml), pretty-xml (pretty rdf/xml), nt (n triples), turtle, n3, rdfa (Invisible RDFa XHTML snippet)
 
 Parsing existing Resource Maps.
 The argument to ReMDocument can be a filename or a URL.
@@ -114,6 +114,7 @@ Or an RDF Parser, which requires format to be set on the rem document:
     >>> rdfp.parse(remdoc2)
     <foresite.ore.ResourceMap object ...
 }}}
+Possible values for format:  xml, trix, n3, nt, rdfa
 
 And then re-serialise in a different form:
 {{{
