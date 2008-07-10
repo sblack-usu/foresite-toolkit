@@ -18,7 +18,7 @@ The main goal of the library is to provide an intuitive object oriented layer ov
 Import everything
 {{{
     >>> from foresite import *
-    >>> from rdflib import URIRef
+    >>> from rdflib import URIRef, Namespace
 }}}
 
 Create an aggregation
@@ -143,11 +143,27 @@ And then treat them like any object
     >>> something._rdf.type = URIRef('http://somewhere.org/class/something')
 }}}
 
+To add in additional namespaces:
+
+{{{
+    >>> utils.namespaces['nss'] = Namespace('http://nss.com/namespace/ns')
+    >>> utils.namespaceSearchOrder.append('nss')
+    >>> utils.elements['nss'] = ['element1', 'element2', 'element3']
+}}}
+
 And finally, some options that can be set to change the behaviour of the library:
 
 {{{
      >>> utils.assignAgentUri = True   # instead of blank node, assign UUID URI
      >>> utils.proxyType = 'UUID'  # instead of oreproxy.org, assign UUID proxy
+}}}
+
+If you try to serialize an unconnected graph, there are several possibilities:
+{{{
+     >>> utils.unconnectedAction = 'ignore' # serialize anyway
+     >>> utils.unconnectedAction = 'drop' # drop unconnected parts of graph
+     >>> utils.unconnectedAction = 'warn' # print a warning to stdout
+     >>> utils.unconnectedAction = 'raise' # raise exception
 }}}
 
 ----
