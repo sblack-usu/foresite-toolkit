@@ -124,7 +124,6 @@ class OREResource(object):
         ns = self.graph.find_namespace(type)
         self._graph_.remove((self._uri_, ns[type], who._uri_))
 
-
     def on_add(self, aggr, proxy):
         self._aggregations_.append((aggr, proxy))
 

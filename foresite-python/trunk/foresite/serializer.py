@@ -1,7 +1,7 @@
 
 import re
 from ore import *
-from utils import namespaces, OreException
+from utils import namespaces, OreException, unconnectedAction
 from rdflib import URIRef, BNode, plugin, syntax
 from lxml import etree
 from lxml.etree import Element, SubElement
@@ -75,6 +75,8 @@ class ORESerializer(object):
         return g
 
     def connected_graph(self, graph, uri):
+        if unconnectedAction == 'ignore':
+            return graph
         g = Graph()
         all_nodes = list(graph.all_nodes())
         discovered = {}
@@ -93,7 +95,12 @@ class ORESerializer(object):
                     visiting.append(new_x)
         if len(discovered) != len(all_nodes):
             # print 'Input graph to serialize is not connected'
-            pass
+            if unconnectedAction == 'warn':
+                print "Warning: Graph is unconnected, some nodes being dropped"
+            elif unconnectedAction == 'raise':
+                raise OreException('Graph to be serialized is unconnected')
+            elif unconnectedAction != 'drop':
+                raise ValueError('Unknown unconnectedAction setting: %s' % unconnectedAction)
         return g
 
 
@@ -103,7 +110,8 @@ class RdfLibSerializer(ORESerializer):
         g = self.merge_graphs(rem)
         data = g.serialize(format=self.format)
         uri = str(rem._uri_)
-        return ReMDocument(uri, data)
+        rd = ReMDocument(uri, data, format=self.format)
+        return rd
 
 class AtomSerializer(ORESerializer):
 
@@ -181,9 +189,21 @@ class AtomSerializer(ORESerializer):
                     sg.remove((what.uri, namespaces['ore']['isAggregatedBy'], a))
                 self.done_triples = []
                 # and add in proxy info
-                sg += what._currProxy_.graph
-                for a in what._currProxy_._agents_:
+                proxy = what._currProxy_
+                sg += proxy.graph
+                for a in proxy._agents_:
                     sg += a.graph
+                # remove proxyFor, proxyIn
+                for a in proxy._ore.proxyFor:
+                    sg.remove((proxy.uri, namespaces['ore']['proxyFor'], a))
+                for a in proxy._ore.proxyIn:
+                    sg.remove((proxy.uri, namespaces['ore']['proxyIn'], a))
+                for a in proxy.type:                
+                    for b in sg.objects(a, namespaces['rdfs']['isDefinedBy']):
+                        sg.remove((a, namespaces['rdfs']['isDefinedBy'], b))
+                    for b in sg.objects(a, namespaces['rdfs']['label']):
+                        sg.remove((a, namespaces['rdfs']['label'], b))
+                    sg.remove((proxy.uri, namespaces['rdf']['type'], a))
 
         elif isinstance(what, ResourceMap):
 

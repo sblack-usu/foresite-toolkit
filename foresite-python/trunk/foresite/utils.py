@@ -15,6 +15,13 @@ assignAgentUri = False
 proxyType = 'proxy'
 # proxyType = 'UUID'
 
+### What to do when encounter unconnected graph:
+
+#unconnectedAction = 'ignore'  # produce unconnected graph
+unconnectedAction = 'drop'  # drop any unconnected triples silently
+#unconnectedAction = 'warn' # print a warning
+#unconnectedAction = 'raise' # raise an Exception
+
 
 def gen_proxy_uuid(res, aggr):
     u = gen_uuid()
@@ -77,7 +84,6 @@ namespaceSearchOrder = ['ore', 'dc', 'dcterms', 'foaf', 'rdf', 'rdfs', 'orex', '
 internalPredicates = [namespaces['orex']['isAuthoritativeFor'],
                       namespaces['orex']['page'],
                       ]
-
 
 namespaceElemRe = re.compile('^\{(.+)\}(.+)$')
 

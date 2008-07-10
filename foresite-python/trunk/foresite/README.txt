@@ -4,17 +4,33 @@ Foresite
 Usage
 -----
 
-    >>> from foresite.serializer import AtomSerializer
+Import everything
+
+    >>> from foresite import *
+    >>> from rdflib import URIRef
 
 Create an aggregation
 
-    >>> from foresite.ore import Aggregation
     >>> a = Aggregation('my-aggregation-uri')
+
+Set properties on the aggregation.
+The first defaults to dc:title, the second explicitly sets it as 
+dcterms:created.
+
     >>> a.title = "My Aggregation"
+    >>> a._dcterms.created = "2008-07-10T12:00:00"
 
-Aggregate two resources
+And retrieve properties:
 
-    >>> from foresite.ore import AggregatedResource
+    >>> a._dc.title
+    [rdflib.Literal('My Aggregation', ...
+    >>> a.created
+    [rdflib.Literal('2008-07-10T12:00:00', ...
+
+Note that they become lists as any property can be added multiple times.
+
+Create and Aggregate two resources
+
     >>> res = AggregatedResource('my-photo-1-uri')
     >>> res.title = "My first photo"
     >>> res2 = AggregatedResource('my-photo-2-uri')
@@ -22,21 +38,86 @@ Aggregate two resources
     >>> a.add_resource(res)
     >>> a.add_resource(res2)
 
-Identify the agent of aggregation
 
-    >>> from foresite.ore import Agent
+Create and associate an agent (without a URI) with the aggregation
+
     >>> me = Agent()
     >>> me.name = "Rob Sanderson"
     >>> a.add_agent(me, 'creator')
 
-Register an Atom serializer with the aggregation
+If no URI assigned, then it will be a blank node:
 
-    >>> from foresite.serializer import AtomSerializer
+    >>> me.uri
+    rdflib.BNode(...
+
+Create an agent with a URI:
+
+    >>> you = Agent('uri-someone-else')
+
+Register an Atom serializer with the aggregation.
+The registration creates a new ResourceMap, which needs a URI.
+
     >>> serializer = AtomSerializer()
+    >>> rem = a.register_serialization(serializer, 'my-atom-rem-uri')
 
-    >>> a.register_serialization(serializer, 'my-atom-rem-uri')
-    <foresite.ore.ResourceMap object at ...>
+And fetch the serialisation.
 
-    >>> data = a.get_serialization().data
-    >>> print data
+    >>> remdoc = a.get_serialization()
+    >>> print remdoc.data
     <feed ...
+
+Or, equivalently:
+
+    >>> remdoc = rem.get_serialization()
+    >>> print remdoc.data
+    <feed ...
+
+Resource Maps can be created by hand:
+
+    >>> rem2 = ResourceMap('my-rdfa-rem-uri')
+    >>> rem2.set_aggregation(a)
+
+And have their own serializers:
+
+    >>> rdfa = RdfLibSerializer('rdfa')
+    >>> rem2.register_serialization(rdfa)
+    >>> remdoc2 = rem2.get_serialization()
+    >>> print remdoc2.data
+    <div id="ore:ResourceMap" xmlns...
+
+Possible values for RdfLibSerializer:  rdf (rdf/xml), pretty-xml (pretty rdf/xml), nt (n triples), turtle, n3, rdfa (Invisible RDFa XHTML snippet)
+
+
+Parsing existing Resource Maps.
+The argument to ReMDocument can be a filename or a URL.
+
+    >>> remdoc = ReMDocument("http://www.openarchives.org/ore/0.9/atom-examples/atom_dlib_maxi.atom")
+    >>> ap = AtomParser()
+    >>> rem = ap.parse(remdoc)
+    >>> aggr = rem.aggregation
+
+Or an RDF Parser, which requires format to be set on the rem document:
+
+    >>> rdfp = RdfLibParser()
+    >>> remdoc2.format = 'rdfa'     # done by the serializer by default
+    >>> rdfp.parse(remdoc2)
+    <foresite.ore.ResourceMap object ...
+
+Possible values for format:  xml, trix, n3, nt, rdfa
+
+And then re-serialise in a different form:
+
+    >>> rdfxml = RdfLibSerializer('xml')
+    >>> rem2 = aggr.register_serialization(rdfxml, 'my-rdf-rem-uri')
+    >>> remdoc3 = rem2.get_serialization()
+
+Creating arbitrary triples:
+
+    >>> something = ArbitraryResource('uri-random')
+    >>> a.add_triple(something)
+
+And then treat them like any object
+
+    >>> something.title = "Random Title"
+    >>> something._rdf.type = URIRef('http://somewhere.org/class/something')
+
