@@ -3,6 +3,13 @@
 
 Documentation for the Python library.
 
+==Introduction==
+
+The library requires two prerequisites rdflib and lxml.  These are both available in pypi, and hence the setup.py should install them if you don't have them already.
+
+The main goal of the library is to provide an intuitive object oriented layer over top of the graph storage system (rdflib) to make ORE 'objects' more easy to work with at a programmatic level.
+
+
 ==Usage==
 -----
 
@@ -133,3 +140,10 @@ And then treat them like any object
     >>> something.title = "Random Title"
     >>> something._rdf.type = URIRef('http://somewhere.org/class/something')
 }}}
+
+----
+==Gotchas to Avoid==
+
+  * Remember that all properties are lists, even if you only set one value for it.
+  * It doesn't automatically detect URIs (there are so many types!) and turn them into URIRefs.  If they're not URIRefs, then the graph will treat them as literals.
+  * The serialisers will ensure connectedness of the graphs... this is important in combination with the above point ... if it's not a URIRef, then any triples that have it as a subject will be dropped.
