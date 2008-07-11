@@ -1,14 +1,22 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
+from setuptools import setup, find_packages
 
-setup (name="foresite",
-       version= "0.9",
-       author = "Rob Sanderson",
-       author_email = "azaroth@liv.ac.uk",
-       license = "BSD",
-       description = 'OAI-ORE Library',
-       long_description =       """ """,
-       platforms = "Any Python 2.4 or later",
-       url = "http://code.google.com/p/foresite-toolkit/",
-       packages = ["foresite"])
+version = '0.9'
+setup(name='foresite',
+      version=version,
+      description='Library for constructing, parsing, manipulating and serializing OAI-ORE Resource Maps',
+      long_description="""\
+""",
+      classifiers=[],
+      author='Rob Sanderson',
+      author_email='azaroth@liv.ac.uk',
+      url='http://code.google.com/p/foresite-toolkit/',
+      license='BSD',
+      packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
+      include_package_data=True,
+      zip_safe=False,
+      install_requires=['rdflib<3a', 'lxml'],
+      test_suite='foresite.tests.test_suite'
+      )
+
