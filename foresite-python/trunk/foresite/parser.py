@@ -27,7 +27,6 @@ class RdfLibParser(OREParser):
             graph.parse(data)
         
         # take graph and find objects, split up stuff into graph
-
         # Find ReM/Aggr        
         lres = list(graph.query("PREFIX ore: <%s> SELECT ?a ?b WHERE {?a ore:describes ?b .}" % namespaces['ore']))
         uri_r = lres[0][0]
@@ -306,9 +305,6 @@ class AtomParser(OREParser):
             self.handle_link(link, aggr)
 
         # RDF blocks. Put everything on aggregation
-        # XXX:  If link out of ReM to something, then something goes onto Aggr
-        #       But then in new ReM for same Aggr, will have unconnected graph
-        #       DISCUSS:  throw out unconnected at serialisation time
 
         for rdf in root.xpath('/atom:feed/rdf:Description', namespaces=namespaces):
             if rdf.attrib['{%s}about' % namespaces['rdf']] == uri_r[0]:

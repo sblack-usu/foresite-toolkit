@@ -1,7 +1,7 @@
 
 import re
 from ore import *
-from utils import namespaces, OreException, unconnectedAction
+from utils import namespaces, OreException, unconnectedAction, pageSize
 from rdflib import URIRef, BNode, plugin, syntax
 from lxml import etree
 from lxml.etree import Element, SubElement
@@ -19,7 +19,7 @@ class ORESerializer(object):
                      'rdfa' : 'application/xhtml+xml',
                      'xml' : 'application/rdf+xml',
                      'nt' : 'text/plain',
-                     'n3' : 'text/rdf+n2',
+                     'n3' : 'text/rdf+n3',
                      'turtle' : 'application/turtle',
                      'pretty-xml' : 'application/rdf+xml'
                      }
@@ -27,7 +27,7 @@ class ORESerializer(object):
         self.public = public
         self.mimeType = mimetypes.get(format, '')
 
-    def merge_graphs(self, rem):
+    def merge_graphs(self, rem, page=-1):
         g = Graph()
         if not list(rem._graph_.objects(rem._uri_, namespaces['dcterms']['creator'])):
             rem.add_agent(libraryAgent, 'creator')
@@ -47,7 +47,15 @@ class ORESerializer(object):
             g += at._graph_
         for c in aggr._agents_:
             g += c._graph_
-        for (res, proxy) in aggr._resources_:
+
+        if page != -1:
+            # first is 1, 2, 3 ...
+            start = (page-1) * pageSize
+            tosrlz = aggr._resources_[start:start+pageSize]
+        else:
+            tosrlz = aggr._resources_
+            
+        for (res, proxy) in tosrlz:
             g += res._graph_
             g += proxy._graph_
             for at in res._triples_:
@@ -66,12 +74,7 @@ class ORESerializer(object):
                     g.remove((s,p,o))
         if not aggr._resources_:
             raise OreException("Aggregation must aggregate something")
-
-        # DISCUSS: Ensure connectedness.
-        # This means can construct unconnected stuff, just doesn't get
-        # serialised.  Should alert this?
         g = self.connected_graph(g, aggr._uri_)
-
         return g
 
     def connected_graph(self, graph, uri):
@@ -94,7 +97,6 @@ class ORESerializer(object):
                 if isinstance(new_x, URIRef) and not discovered.has_key(new_x) and not new_x in visiting:
                     visiting.append(new_x)
         if len(discovered) != len(all_nodes):
-            # print 'Input graph to serialize is not connected'
             if unconnectedAction == 'warn':
                 print "Warning: Graph is unconnected, some nodes being dropped"
             elif unconnectedAction == 'raise':
@@ -107,7 +109,7 @@ class ORESerializer(object):
 class RdfLibSerializer(ORESerializer):
 
     def serialize(self, rem, page=-1):
-        g = self.merge_graphs(rem)
+        g = self.merge_graphs(rem, page)
         data = g.serialize(format=self.format)
         uri = str(rem._uri_)
         rd = ReMDocument(uri, data, format=self.format)
@@ -424,8 +426,6 @@ class AtomSerializer(ORESerializer):
 
             if proxy._ore.lineage:
                 e = SubElement(entry, 'link', rel="via", href=str(proxy._ore.lineage[0]))
-
-            # Blech!
             res._currProxy_ = proxy
             self.generate_rdf(entry, res)
             res._currProxy_ = None

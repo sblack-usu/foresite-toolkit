@@ -22,6 +22,9 @@ unconnectedAction = 'drop'  # drop any unconnected triples silently
 #unconnectedAction = 'warn' # print a warning
 #unconnectedAction = 'raise' # raise an Exception
 
+# Number of resources per page to serialise
+pageSize = 10
+
 
 def gen_proxy_uuid(res, aggr):
     u = gen_uuid()

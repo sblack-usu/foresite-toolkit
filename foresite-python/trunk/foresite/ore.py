@@ -161,10 +161,7 @@ class ResourceMap(OREResource):
         self.register_serialization(serializer)
 
     def register_serialization(self, serializer):
-        # DISCUSS: Should we allow multiple formats?
-        # rdf/xml IS both text/xml, application/rdf+xml
         if self.serializer:
-            # Otherwise format will (probably) be wrong
             raise OreException("ResourceMap already has serializer")
         if not serializer.mimeType in self._dc.format:
             self.format = serializer.mimeType
@@ -218,8 +215,6 @@ class Aggregation(OREResource):
             if x[0] == res:
                 raise KeyError('Aggregation %s already aggregates %s' % (self.uri, res.uri))
         self.aggregates = res.uri
-        # DISCUSS: Should aggregation or resource generate proxy?
-        # (Aggregation needs to know proxy)
         if not proxy:
             uri = gen_proxy_uri(res, self)
             proxy = Proxy(uri)
@@ -361,9 +356,6 @@ class Proxy(OREResource):
         self._resource_ = res
         self.proxyIn = aggr.uri
         self._aggregation_ = aggr
-        # DISCUSS:  Extra information about proxies?
-        #self.created = now()
-        #self.modified = now()
 
 class Agent(OREResource):
 
