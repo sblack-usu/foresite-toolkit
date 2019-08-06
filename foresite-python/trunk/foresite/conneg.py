@@ -127,7 +127,7 @@ class MimeType(object):
         #l = [('q', self.qval)]
         #l.extend(self.params.items())        
         # Actually, most likely Don't want to serialize the qval
-        l = self.params.items()
+        l = list(self.params.items())
         if l:            
             return self.mimetype1 + "/" + self.mimetype2 + ";" + ";".join(["%s=%s" % x for x in l])
         else:
@@ -174,19 +174,19 @@ class Parser(object):
     def top(self):
         mt = MimeType()
         try:
-            tok = self.ml.next() # text
+            tok = next(self.ml) # text
         except StopIteration:
             return None
         mt.mimetype1 = tok
-        sl = self.ml.next() # /
+        sl = next(self.ml) # /
         if sl != "/":
             raise ParseError("Expected /, got: " + sl)        
-        tok2 = self.ml.next() # html
+        tok2 = next(self.ml) # html
         mt.mimetype2 = tok2
 
         while True:
             try:
-                tok = self.ml.next()
+                tok = next(self.ml)
             except StopIteration:
                 return mt
             if tok == ',':
@@ -201,11 +201,11 @@ class Parser(object):
                 raise ParseError("Expected , or ; got: %r" % tok)
 
     def param(self):
-        key = self.ml.next()
-        eq = self.ml.next()
+        key = next(self.ml)
+        eq = next(self.ml)
         if eq != "=":
             raise ParseError("Expected =, got: " + eq)
-        val = self.ml.next()
+        val = next(self.ml)
         return (key, val)
             
 
@@ -248,4 +248,4 @@ if __name__ == '__main__':
     mts2 = p2.process()
 
     b = best(mts, mts2)
-    print b
+    print(b)

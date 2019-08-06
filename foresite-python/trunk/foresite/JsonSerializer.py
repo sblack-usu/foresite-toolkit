@@ -1,4 +1,4 @@
-from __future__ import generators
+
 
 from rdflib.serializer import Serializer
 
@@ -66,7 +66,7 @@ class JsonSerializer(Serializer):
                 if self.gdataColon:
                     predname = predname.replace(':', '$')
                 value = self.value(objt)
-                if data.has_key(predname):
+                if predname in data:
                     data[predname].append(value)
                 else:
                     data[predname] = [value]
@@ -114,7 +114,7 @@ class PrettyJsonSerializer(JsonSerializer):
             assert bindings["rdf"]==RDFNS
         else:
             bindings["rdf"] = RDFNS
-        for prefix, namespace in bindings.iteritems():
+        for prefix, namespace in bindings.items():
             yield prefix, namespace
 
     def initObj(self):

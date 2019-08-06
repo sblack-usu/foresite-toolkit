@@ -18,7 +18,7 @@ class JsonParser(Parser):
         objs = json.loads(data)
 
         # check if pretty-json
-        keys = objs.keys()
+        keys = list(objs.keys())
         pretty = 0
         bindings = {}
 
@@ -37,7 +37,7 @@ class JsonParser(Parser):
                     s = URIRef(k)
                 # predicates
                 preds = objs[k]
-                for (p, v) in preds.items():
+                for (p, v) in list(preds.items()):
                     if pretty:
                         dpidx = p.find('$')
                         if dpidx == -1:                            

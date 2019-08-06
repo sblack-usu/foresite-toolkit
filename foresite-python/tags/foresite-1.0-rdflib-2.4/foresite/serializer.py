@@ -1,10 +1,10 @@
 
 import re
-from ore import *
-from ore import foresiteAgent
+from .ore import *
+from .ore import foresiteAgent
 from foresite import libraryName, libraryUri, libraryVersion
-from utils import namespaces, OreException, unconnectedAction, pageSize
-from utils import gen_uuid, build_html_atom_content
+from .utils import namespaces, OreException, unconnectedAction, pageSize
+from .utils import gen_uuid, build_html_atom_content
 from rdflib import URIRef, BNode, Literal, plugin, syntax, RDF
 from rdflib.util import uniq
 from lxml import etree
@@ -78,9 +78,9 @@ class ORESerializer(object):
                 continue
             done.append(what)            
             g += what._graph_
-            for at in what._triples_.values():
+            for at in list(what._triples_.values()):
                 stack.append(at)
-            for who in what._agents_.values():
+            for who in list(what._agents_.values()):
                 stack.append(who)
                 
         if self.public:
@@ -101,24 +101,24 @@ class ORESerializer(object):
             return graph
         g = Graph()
         all_nodes = list(graph.all_nodes())
-        all_nodes = filter(lambda y: not isinstance(y, Literal), all_nodes)
+        all_nodes = [y for y in all_nodes if not isinstance(y, Literal)]
         discovered = {}
         visiting = [uri]
         while visiting:
             x = visiting.pop()
-            if not discovered.has_key(x):
+            if x not in discovered:
                 discovered[x] = 1
             for (p, new_x) in graph.predicate_objects(subject=x):
                 g.add((x,p,new_x))
-                if (isinstance(new_x, URIRef) or isinstance(new_x, BNode)) and not discovered.has_key(new_x) and not new_x in visiting:
+                if (isinstance(new_x, URIRef) or isinstance(new_x, BNode)) and new_x not in discovered and not new_x in visiting:
                     visiting.append(new_x)
             for (new_x, p) in graph.subject_predicates(object=x):
                 g.add((new_x,p,x))
-                if (isinstance(new_x, URIRef) or isinstance(new_x, BNode)) and not discovered.has_key(new_x) and not new_x in visiting:
+                if (isinstance(new_x, URIRef) or isinstance(new_x, BNode)) and new_x not in discovered and not new_x in visiting:
                     visiting.append(new_x)
         if len(discovered) != len(all_nodes):
             if unconnectedAction == 'warn':
-                print "Warning: Graph is unconnected, some nodes being dropped"
+                print("Warning: Graph is unconnected, some nodes being dropped")
             elif unconnectedAction == 'raise':
                 raise OreException('Graph to be serialized is unconnected')
             elif unconnectedAction != 'drop':
@@ -456,9 +456,9 @@ class OldAtomSerializer(ORESerializer):
 
         sg = Graph()
         sg += what.graph
-        for at in what.triples.values():
+        for at in list(what.triples.values()):
             sg += at.graph
-        for a in what.agents.values():
+        for a in list(what.agents.values()):
             sg += a.graph
 
         for a in what.type:                
@@ -514,7 +514,7 @@ class OldAtomSerializer(ORESerializer):
                 proxy = what._currProxy_
                 if proxy:
                     sg += proxy.graph
-                    for a in proxy._agents_.values():
+                    for a in list(proxy._agents_.values()):
                         sg += a.graph
                     # remove proxyFor, proxyIn
                     for a in proxy._ore.proxyFor:
@@ -605,8 +605,8 @@ class OldAtomSerializer(ORESerializer):
         # Check entire graph is connected
         g = self.merge_graphs(rem)
         
-        if namespaces.has_key(''):
-            del namespaces[u'']
+        if '' in namespaces:
+            del namespaces['']
         root = Element("feed", nsmap=namespaces)
         #namespaces[''] = myNamespace
 

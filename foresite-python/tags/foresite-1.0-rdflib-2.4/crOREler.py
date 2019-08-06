@@ -1,7 +1,7 @@
 #!/home/cheshire/install/bin/python -i
 
 from foresite import *
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 import os, sys
 import getopt
 
@@ -10,10 +10,10 @@ import getopt
 # content negotiation for prefered ReM format
 
 def usage():
-    print """Usage:
+    print("""Usage:
 %s [-r] [-d DEPTH] [-f ReM-Format] [-remDir ReM-Directory]
 %s [-resDir Resource-Directory] URI
-  ReM-Format is one of: xml, atom, rdfa, nt, n3, turtle""" % (sys.argv[0], ' ' * len(sys.argv[0]))
+  ReM-Format is one of: xml, atom, rdfa, nt, n3, turtle""" % (sys.argv[0], ' ' * len(sys.argv[0])))
     sys.exit(0)
 
 optstr = "rd:f:"
@@ -44,7 +44,7 @@ for o in optlist:
         try:
             maxDepth = int(o[1])
         except:
-            print "DEPTH must be an integer"
+            print("DEPTH must be an integer")
             usage()
     elif o[0] == '-r':
         fetchAR = 1
@@ -53,14 +53,14 @@ for o in optlist:
     elif o[0] == '--resDir':
         arDirectory = o[1]
     elif o[0] == '-f':
-        if not mimeHash.has_key(o[1]):
-            print "Unknown format '%s'" % o[1]
+        if o[1] not in mimeHash:
+            print("Unknown format '%s'" % o[1])
             usage()
         else:
             # pass through accept_header
             accept_header = '%s;q=1.0' % mimeHash[o[1]]
     else:
-        print "Unknown option: %s" % o[0]
+        print("Unknown option: %s" % o[0])
         usage()
 
 done = {}
@@ -85,7 +85,7 @@ while stack:
     if maxDepth > -1 and depth > maxDepth:
         continue
 
-    print "Fetching %s..." % next
+    print("Fetching %s..." % next)
     rd = ReMDocument(next, accept=accept_header)
 
     fn = rd.uri.replace('http://', '')
@@ -106,7 +106,7 @@ while stack:
     except:
         # unparsable
         
-        print 'URI %s is unparsable' % next
+        print('URI %s is unparsable' % next)
         raise
 
 
@@ -116,13 +116,13 @@ while stack:
     oas = rem.aggregation.do_sparql('SELECT ?a WHERE {?a a ore:Aggregation }')
     for oa in oas:
         oa = str(oa[0])
-        if not done.has_key(oa) and not stack.has_key(oa):
+        if oa not in done and oa not in stack:
             stack[oa] = depth + 1
 
     oas = rem.aggregation.do_sparql('SELECT ?a WHERE {?b ore:isAggregatedBy ?a }')
     for oa in oas:
         oa = str(oa[0])
-        if not done.has_key(oa) and not stack.has_key(oa):
+        if oa not in done and oa not in stack:
             stack[oa] = depth + 1
     
     if fetchAR:
@@ -130,10 +130,10 @@ while stack:
         ars = rem.aggregation.do_sparql('SELECT ?a WHERE {?b ore:aggregates ?a }')
         for ar in ars:
             ar = str(ar[0])
-            if not done.has_key(ar) and not stack.has_key(ar) and not doneAr.has_key(ar):
-                print "Fetching Aggregated Resource: %s..." % ar
-                req = urllib2.Request(ar)
-                fh = urllib2.urlopen(req)
+            if ar not in done and ar not in stack and ar not in doneAr:
+                print("Fetching Aggregated Resource: %s..." % ar)
+                req = urllib.request.Request(ar)
+                fh = urllib.request.urlopen(req)
                 data = fh.read()
                 fh.close()
                 fn = ar.replace('http://', '')

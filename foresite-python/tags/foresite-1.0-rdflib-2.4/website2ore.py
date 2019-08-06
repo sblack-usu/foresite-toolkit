@@ -3,10 +3,10 @@
 # depth first web crawler
 
 import sys, os, re
-import urllib
-import urlparse
+import urllib.request, urllib.parse, urllib.error
+import urllib.parse
 from lxml import etree
-import StringIO
+import io
 import hashlib
 
 from foresite import *
@@ -34,27 +34,27 @@ aggr = Aggregation(start + '#aggregation')
 
 
 def crawl(uri, src):
-    if not pageHash.has_key(uri):
+    if uri not in pageHash:
         pid = len(pageHash)
         pageHash[uri] = pid
     else:
         pid = pageHash[uri]
     linkHash = webGraphs[-1]
-    if not linkHash.has_key(pid):
+    if pid not in linkHash:
         linkHash[pid] = []
     else:
         return
 
-    print "processing %s->%s: %s" % (src, pid, uri)
+    print("processing %s->%s: %s" % (src, pid, uri))
 
     if src != -1:
         linkHash[src].append(pid)
 
     #fetch, find links, record, crawl
     try:
-        fh = urllib.urlopen(uri)
+        fh = urllib.request.urlopen(uri)
     except:
-        print "... BROKEN"
+        print("... BROKEN")
         return
 
 
@@ -91,8 +91,8 @@ def crawl(uri, src):
     md5 = hashlib.new('md5')
     md5.update(data)
     hd = md5.hexdigest()
-    if md5Hash.has_key(hd):
-        print "%s == %s" % (pid, md5Hash[hd])
+    if hd in md5Hash:
+        print("%s == %s" % (pid, md5Hash[hd]))
         return
     else:
         md5Hash[hd] = pid
@@ -100,9 +100,9 @@ def crawl(uri, src):
         aggr.add_resource(ar)
 
     try:
-        dom = etree.parse(StringIO.StringIO(data), parser)
+        dom = etree.parse(io.StringIO(data), parser)
     except:
-        print " --- failed to parse"
+        print(" --- failed to parse")
         return
 
     title = dom.xpath('//title/text()')
@@ -128,20 +128,20 @@ def crawl(uri, src):
             continue
 
         if l[0] == "/":
-            l = urlparse.urljoin(uri, l)
+            l = urllib.parse.urljoin(uri, l)
         elif l[:7].lower() != "http://" and l[:8].lower() != "https://":
             # check other protocols
             if nonHttpRe.search(l):
                 continue
             # put in current directory
-            l = urlparse.urljoin(uri, l)
+            l = urllib.parse.urljoin(uri, l)
 
         # check if we really want to crawl...
         if nonHtmlRe.search(l):
             # ignore common stuff
             # print "Skipping: %s" % chk
             pass
-        elif pageHash.has_key(l):
+        elif l in pageHash:
             # ignore already done
             # print "Skipping: %s" % chk
             pass
@@ -163,4 +163,4 @@ while stack:
 
 rem = aggr.register_serialization(srlz, '#rem')
 rd = rem.get_serialization()
-print rd.data
+print(rd.data)

@@ -42,9 +42,9 @@ rdfap = RdfAParser()
 p.strict = True
 
 mimeHash = {}
-for (k,v) in srlzHash.items():
+for (k,v) in list(srlzHash.items()):
     mimeHash[v.mimeType] = k
-mimestr = ', '.join(mimeHash.keys())
+mimestr = ', '.join(list(mimeHash.keys()))
 mimeList = conneg.parse(mimestr)
 
 protoUriRe = re.compile("^([s]?http[s]?://|[t]?ftp:/|z39.50r:|gopher:|imap://|news:|nfs:|nntp:|rtsp:)")
@@ -54,7 +54,7 @@ class validateHandler:
         req.content_type = ct
         req.content_length = len(text)
         req.send_http_header()
-        if type(text) == unicode:
+        if type(text) == str:
             req.write(text.encode('utf-8'))
         else:
             req.write(text)
@@ -81,7 +81,7 @@ class validateHandler:
         if not mt:
             xtn = form.get('extension', '')
             if xtn:
-                if not srlzHash.has_key(xtn):
+                if xtn not in srlzHash:
                     # can't continue
                     raise ValueError(xtn)
                 else:
@@ -103,7 +103,7 @@ class validateHandler:
 
         srlz = srlzHash[xtn]
 
-        if form.has_key('aggregation'):
+        if 'aggregation' in form:
             uri = form.get('aggregation')
         else:
             uri = path
@@ -120,7 +120,7 @@ class validateHandler:
             # fetch
             
             rd = ReMDocument(uri)
-        except Exception, e:
+        except Exception as e:
             self.error("Could not retrieve Resource Map from '%s': %s" % (uri, e.message), req)
             return
 
@@ -141,11 +141,11 @@ class validateHandler:
                 parser.strict = True
                 raise
 
-        except OreException, e:
+        except OreException as e:
             # get exception message
             self.error("Resource Map Invalid: %s" % e.message, req)
             return
-        except SAXParseException, e:
+        except SAXParseException as e:
             self.error("Could not parse XML: %s (line %s, column %s)" % (e.getMessage(), e.getLineNumber(), e.getColumnNumber()), req)
             return
         except:
@@ -159,7 +159,7 @@ class validateHandler:
             if srlz == srlzHash['rdfa.html']:
                 data = '<xhtml xmlns="http://www.w3.org/1999/xhtml"><body><i>Invisible RDFa resource map follows, it must have validated okay. [view source] :)</i>' + data + "</body></xhtml>"
 
-        except Exception, e:
+        except Exception as e:
             self.error("Could not serialize Aggregation to Resource Map: %s" % e.message, req)
             return
         

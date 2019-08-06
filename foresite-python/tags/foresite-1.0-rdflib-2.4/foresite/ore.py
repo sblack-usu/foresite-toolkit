@@ -1,10 +1,10 @@
 
 import os
-import urllib, urllib2
+import urllib.request, urllib.parse, urllib.error, urllib.request, urllib.error, urllib.parse
 from rdflib import ConjunctiveGraph, URIRef, BNode, Literal
-from utils import *
-from StringIO import StringIO
-from utils import unconnectedAction
+from .utils import *
+from io import StringIO
+from .utils import unconnectedAction
 from foresite import libraryName, libraryUri, libraryEmail
 from foresite import conneg
 
@@ -17,7 +17,7 @@ class Graph(ConjunctiveGraph):
             ConjunctiveGraph.__init__(self, store, id)
         else:
             ConjunctiveGraph.__init__(self)
-        for (key,val) in namespaces.iteritems():
+        for (key,val) in namespaces.items():
             self.bind(key, val)
 
     def find_namespace(self, name):
@@ -63,7 +63,7 @@ class OREResource(object):
         cns = self.currNs
         if name[0] == "_" and name[-1] == "_":
             return getattr(self, name[1:-1])
-        elif name[0] == "_" and namespaces.has_key(name[1:]):
+        elif name[0] == "_" and name[1:] in namespaces:
             # we're looking for self.namespace.property
             self._currNs_ = name[1:]
             return self
@@ -78,7 +78,7 @@ class OREResource(object):
         
         if name[0] == "_" and name[-1] == "_":            
             return object.__setattr__(self, name[1:-1], value)
-        elif name[0] == "_" and namespaces.has_key(name[1:]):
+        elif name[0] == "_" and name[1:] in namespaces:
             # we're looking for self.namespace.property
             object.__setattr__(self, 'currNs', name[1:])
             return self
@@ -278,9 +278,9 @@ class Aggregation(OREResource):
         g = Graph()
         for rem in self.resourceMaps:
             g += rem._graph_
-            for at in rem._triples_.values():
+            for at in list(rem._triples_.values()):
                 g += at._graph_
-            for c in rem._agents_.values():
+            for c in list(rem._agents_.values()):
                 g += c._graph_
             if not rem.created:
                 g.add((rem._uri_, namespaces['dcterms']['created'], Literal(now())))
@@ -288,17 +288,17 @@ class Aggregation(OREResource):
 
         aggr = self
         g += aggr._graph_
-        for at in aggr._triples_.values():
+        for at in list(aggr._triples_.values()):
             g += at._graph_
-        for c in aggr._agents_.values():
+        for c in list(aggr._agents_.values()):
             g += c._graph_
         for (res, proxy) in aggr._resources_:
             g += res._graph_
             if proxy:
                 g += proxy._graph_
-            for at in res._triples_.values():
+            for at in list(res._triples_.values()):
                 g += at._graph_
-            for c in res._agents_.values():
+            for c in list(res._agents_.values()):
                 g += c._graph_
             if isinstance(res, Aggregation):
                 # include nestings recursively
@@ -332,7 +332,7 @@ class Aggregation(OREResource):
         rem = ResourceMap(uri)
         rem.set_aggregation(self)
         rem.register_serializer(serializer)
-        for (k,v) in kw.iteritems():
+        for (k,v) in kw.items():
             if isinstance(v, Agent):
                 rem.add_agent(v, k)
             elif isinstance(v, ArbitraryResource):
@@ -417,14 +417,14 @@ class ReMDocument(StringIO):
         else:
             # try to fetch uri
             try:
-                req = urllib2.Request(uri)
+                req = urllib.request.Request(uri)
                 if accept:
                     # add custom accept header
                     req.add_header('Accept', accept)
                 else:
                     # otherwise add default
                     req.add_header('Accept', accept_header)
-                fh = urllib2.urlopen(req)
+                fh = urllib.request.urlopen(req)
                 self.data = fh.read()
                 self.info = fh.info()
                 mimeType = self.info.dict.get('content-type', mimeType)

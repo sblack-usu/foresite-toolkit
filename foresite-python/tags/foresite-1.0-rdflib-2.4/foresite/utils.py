@@ -1,5 +1,5 @@
 
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import time
 import re
 from rdflib import Namespace
@@ -39,8 +39,8 @@ def gen_proxy_uuid(res, aggr):
     return "urn:uuid:%s" % u
 
 def gen_proxy_oreproxy(res, aggr):
-    a = urllib.quote(str(aggr.uri))
-    ar = urllib.quote(str(res.uri))
+    a = urllib.parse.quote(str(aggr.uri))
+    ar = urllib.parse.quote(str(res.uri))
     return "http://oreproxy.org/r?what=%s&where=%s" % (ar,a)
 
 # Hash must come after function definitions
@@ -119,9 +119,9 @@ except:
             return UuidAsString(GenerateUuid())
     except:
         # No luck, try to generate using unix command
-        import commands
+        import subprocess
         def gen_uuid():
-            return commands.getoutput('uuidgen')
+            return subprocess.getoutput('uuidgen')
 
         uuidre = re.compile("[0-9a-fA-F-]{36}")
         uuid = gen_uuid()
@@ -145,7 +145,7 @@ def now():
 
 def gen_proxy_uri(res, aggr):
     # Allow for easier expansion via adding fn to proxyTypeHash
-    if proxyTypeHash.has_key(proxyType):
+    if proxyType in proxyTypeHash:
         return proxyTypeHash[proxyType](res, aggr)
     else:
         raise KeyError("Unknown proxyType setting: %s" % proxyType)

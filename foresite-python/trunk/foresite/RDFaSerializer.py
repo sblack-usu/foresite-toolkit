@@ -1,4 +1,4 @@
-from __future__ import generators
+
 
 from rdflib.serializer import Serializer
 
@@ -30,7 +30,7 @@ class RDFaSerializer(Serializer):
             assert bindings["rdf"]==RDFNS
         else:
             bindings["rdf"] = RDFNS
-        for prefix, namespace in bindings.iteritems():
+        for prefix, namespace in bindings.items():
             yield prefix, namespace
 
 

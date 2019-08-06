@@ -1,6 +1,6 @@
 
-from ore import *
-from utils import namespaces, OreException, unconnectedAction, protocolUriRe
+from .ore import *
+from .utils import namespaces, OreException, unconnectedAction, protocolUriRe
 from lxml import etree
 from xml.dom import minidom
 from rdflib import StringInputSource, URIRef, plugin, syntax
@@ -87,7 +87,7 @@ class RdfLibParser(OREParser):
             allThings[a_uri] = a
             self.set_fields(a, graph)
             for (subj, pred) in graph.subject_predicates(URIRef(a_uri)):
-                if things.has_key(subj):
+                if subj in things:
                     # direct manipulation, as will have already added predicate in set_fields
                     what = things[subj]
                     what._agents_[a_uri] = a
@@ -97,7 +97,7 @@ class RdfLibParser(OREParser):
         allThings.update(aggr.triples)
 
         for subj in graph.subjects():
-            if not allThings.has_key(subj):
+            if subj not in allThings:
                 # triple needed
                 ar = ArbitraryResource(subj)
                 allThings[subj] = ar
@@ -113,7 +113,7 @@ class RdfLibParser(OREParser):
                 while tocheck:
                     subsubj = tocheck.pop(0)[0]
                     checked[subsubj] = 1
-                    if things.has_key(subsubj):
+                    if subsubj in things:
                         things[subsubj]._triples_[ar.uri] = ar
                         found = 1
                         break
@@ -121,7 +121,7 @@ class RdfLibParser(OREParser):
                         extd = list(graph.subject_predicates(subsubj))
                         if extd:
                             for e in extd[0]:
-                                if not checked.has_key(e):
+                                if e not in checked:
                                     tocheck.append(e)
                         
                 if not found:
@@ -129,7 +129,7 @@ class RdfLibParser(OREParser):
                         # Input graph is not connected!
                         rem._triples_[ar.uri] = ar
                     elif unconnectedAction == 'warn':
-                        print "Input Graph Not Connected at: %s" % subj
+                        print("Input Graph Not Connected at: %s" % subj)
                     elif unconnectedAction == 'raise':
                         raise OreException("Input Graph Not Connected at: %s" % subj)
 
@@ -504,7 +504,7 @@ class OldAtomParser(AtomParser):
             pred = self.entryRels.get(type, '')
 
         if pred:
-            if pred.has_key('ns'):
+            if 'ns' in pred:
                 getattr(what, "_%s" % pred['ns'])
             setattr(what, pred['p'], URIRef(uri))            
             if format or lang or title or extent:
@@ -564,12 +564,12 @@ class OldAtomParser(AtomParser):
         aggr = Aggregation(uri_a[0])
         rem.set_aggregation(aggr)
 
-        for (xp, pred) in self.remMap.iteritems():
+        for (xp, pred) in self.remMap.items():
             val = root.xpath(xp, namespaces=namespaces)
             for v in val:
-                if pred.has_key('ns'):
+                if 'ns' in pred:
                     getattr(rem, "_%s" % pred['ns'])
-                if pred.has_key('type'):
+                if 'type' in pred:
                     v = pred['type'](v)
                 setattr(rem, pred['p'], v)
 
@@ -586,12 +586,12 @@ class OldAtomParser(AtomParser):
             agent.name = name
             rem.add_agent(agent, 'creator')
 
-        for (xp, pred) in self.aggrMap.iteritems():
+        for (xp, pred) in self.aggrMap.items():
             val = root.xpath(xp, namespaces=namespaces)
             for v in val:
-                if pred.has_key('ns'):
+                if 'ns' in pred:
                     getattr(aggr, "_%s" % pred['ns'])
-                if pred.has_key('type'):
+                if 'type' in pred:
                     v = pred['type'](v)
                 setattr(aggr, pred['p'], v)
         
@@ -628,12 +628,12 @@ class OldAtomParser(AtomParser):
             if via:
                 proxy._ore.lineage = URIRef(via[0])
 
-            for (xp, pred) in self.entryMap.iteritems():
+            for (xp, pred) in self.entryMap.items():
                 val = entry.xpath(xp, namespaces=namespaces)
                 for v in val:
-                    if pred.has_key('ns'):
+                    if 'ns' in pred:
                         getattr(res, "_%s" % pred['ns'])
-                    if pred.has_key('type'):
+                    if 'type' in pred:
                         v = pred['type'](v)
                     setattr(res, pred['p'], v)
 

@@ -1,6 +1,6 @@
 
-from ore import *
-from utils import namespaces
+from .ore import *
+from .utils import namespaces
 from rdflib import URIRef, plugin, store
 
 # Store raw triples into a TripleStore somewhere
@@ -93,7 +93,7 @@ class TripleStore(object):
                 allThings[a_uri] = a
                 self.set_fields(a, graph)
                 for (subj, pred) in graph.subject_predicates(URIRef(a_uri)):
-                    if things.has_key(subj):
+                    if subj in things:
                         # direct manipulation, as will have already added predicate in set_fields
                         things[subj]._agents_.append(a)
 
@@ -101,7 +101,7 @@ class TripleStore(object):
                 allThings[at.uri] = at            
 
             for subj in graph.subjects():
-                if not allThings.has_key(subj):
+                if subj not in allThings:
                     # triple needed
                     ar = ArbitraryResource(subj)
                     allThings[subj] = ar
@@ -116,7 +116,7 @@ class TripleStore(object):
                     tocheck = list(graph.subject_predicates(subj))
                     while tocheck:
                         subsubj = tocheck.pop(0)[0]
-                        if things.has_key(subsubj):
+                        if subsubj in things:
                             things[subsubj]._triples_.append(ar)
                             found = 1
                             break
