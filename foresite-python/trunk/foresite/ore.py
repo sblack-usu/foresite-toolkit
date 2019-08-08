@@ -411,7 +411,7 @@ class ReMDocument(StringIO):
             self.data = data
         elif filename:
             if os.path.exists(filename):
-                fh = file(filename)
+                fh = open(filename)
                 self.data = fh.read()
                 fh.close()
         else:
