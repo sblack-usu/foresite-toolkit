@@ -412,7 +412,7 @@ class ReMDocument(StringIO):
         elif filename:
             if os.path.exists(filename):
                 fh = file(filename)
-                self.data = fh.read().decode()
+                self.data = fh.read()
                 fh.close()
         else:
             # try to fetch uri
@@ -425,7 +425,7 @@ class ReMDocument(StringIO):
                     # otherwise add default
                     req.add_header('Accept', accept_header)
                 fh = urllib.request.urlopen(req)
-                self.data = fh.read().decode()
+                self.data = fh.read()
                 self.info = fh.info()
                 mimeType = self.info.dict.get('content-type', mimeType)
                 self.uri = fh.geturl()
@@ -451,7 +451,7 @@ class ReMDocument(StringIO):
 
         self.mimeType = mimeType
         self.format = format
-        StringIO.__init__(self, self.data)
+        StringIO.__init__(self, self.data.decode() if self.data else None)
 
 rem_type = ArbitraryResource(namespaces['ore']['ResourceMap'])
 rem_type.label = "ResourceMap"
