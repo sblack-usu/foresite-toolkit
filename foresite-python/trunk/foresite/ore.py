@@ -451,7 +451,7 @@ class ReMDocument(StringIO):
 
         self.mimeType = mimeType
         self.format = format
-        StringIO.__init__(self, self.data.decode() if self.data else None)
+        StringIO.__init__(self, self.data)
 
 rem_type = ArbitraryResource(namespaces['ore']['ResourceMap'])
 rem_type.label = "ResourceMap"
