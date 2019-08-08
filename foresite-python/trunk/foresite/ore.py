@@ -3,7 +3,7 @@ import os
 import urllib.request, urllib.parse, urllib.error, urllib.request, urllib.error, urllib.parse
 from rdflib import ConjunctiveGraph, URIRef, BNode, Literal
 from .utils import *
-from six import StringIO
+from io import StringIO
 from .utils import unconnectedAction
 from foresite import libraryName, libraryUri, libraryEmail
 from foresite import conneg
@@ -412,7 +412,7 @@ class ReMDocument(StringIO):
         elif filename:
             if os.path.exists(filename):
                 fh = open(filename)
-                self.data = fh.read()
+                self.data = fh.read().decode()
                 fh.close()
         else:
             # try to fetch uri
@@ -425,7 +425,7 @@ class ReMDocument(StringIO):
                     # otherwise add default
                     req.add_header('Accept', accept_header)
                 fh = urllib.request.urlopen(req)
-                self.data = fh.read()
+                self.data = fh.read().decode()
                 self.info = fh.info()
                 mimeType = self.info.dict.get('content-type', mimeType)
                 self.uri = fh.geturl()
