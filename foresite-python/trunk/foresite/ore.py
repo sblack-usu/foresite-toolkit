@@ -3,7 +3,7 @@ import os
 import urllib.request, urllib.parse, urllib.error, urllib.request, urllib.error, urllib.parse
 from rdflib import ConjunctiveGraph, URIRef, BNode, Literal
 from .utils import *
-from io import BytesIO
+from io import StringIO
 from .utils import unconnectedAction
 from foresite import libraryName, libraryUri, libraryEmail
 from foresite import conneg
@@ -398,7 +398,7 @@ class ArbitraryResource(OREResource):
             OREResource.__init__(self, uri)
 
 
-class ReMDocument(BytesIO):
+class ReMDocument(StringIO):
     # Serialisation of objects
     uri = ""
     mimeType = ""
@@ -412,7 +412,7 @@ class ReMDocument(BytesIO):
         elif filename:
             if os.path.exists(filename):
                 fh = open(filename)
-                self.data = fh.read()
+                self.data = fh.read().decode()
                 fh.close()
         else:
             # try to fetch uri
@@ -425,10 +425,10 @@ class ReMDocument(BytesIO):
                     # otherwise add default
                     req.add_header('Accept', accept_header)
                 fh = urllib.request.urlopen(req)
-                self.data = fh.read()
-                self.info = fh.info()
+                self.data = fh.read().decode()
+                self.info = fh.info().decode()
                 mimeType = self.info.dict.get('content-type', mimeType)
-                self.uri = fh.geturl()
+                self.uri = fh.geturl().decode()
                 fh.close()
             except:
                 raise OreException('ReMDocument must either have data or filename')
@@ -451,7 +451,7 @@ class ReMDocument(BytesIO):
 
         self.mimeType = mimeType
         self.format = format
-        BytesIO.__init__(self, self.data)
+        StringIO.__init__(self, self.data)
 
 rem_type = ArbitraryResource(namespaces['ore']['ResourceMap'])
 rem_type.label = "ResourceMap"
