@@ -408,7 +408,7 @@ class ReMDocument(StringIO):
     def __init__(self, uri, data='', filename='', mimeType='', format ='', accept=''):
         self.uri = uri
         if data:
-            self.data = data
+            self.data = data.decode()
         elif filename:
             if os.path.exists(filename):
                 fh = open(filename)
