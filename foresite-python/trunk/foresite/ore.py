@@ -398,7 +398,7 @@ class ArbitraryResource(OREResource):
             OREResource.__init__(self, uri)
 
 
-class ReMDocument(StringIO):    
+class ReMDocument(BytesIO):
     # Serialisation of objects
     uri = ""
     mimeType = ""
