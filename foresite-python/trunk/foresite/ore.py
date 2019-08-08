@@ -3,7 +3,7 @@ import os
 import urllib.request, urllib.parse, urllib.error, urllib.request, urllib.error, urllib.parse
 from rdflib import ConjunctiveGraph, URIRef, BNode, Literal
 from .utils import *
-from io import StringIO
+from six import StringIO
 from .utils import unconnectedAction
 from foresite import libraryName, libraryUri, libraryEmail
 from foresite import conneg
