@@ -412,7 +412,7 @@ class ReMDocument(StringIO):
         elif filename:
             if os.path.exists(filename):
                 fh = file(filename)
-                self.data = fh.read()
+                self.data = fh.read().decode()
                 fh.close()
         else:
             # try to fetch uri
@@ -425,7 +425,7 @@ class ReMDocument(StringIO):
                     # otherwise add default
                     req.add_header('Accept', accept_header)
                 fh = urllib.request.urlopen(req)
-                self.data = fh.read()
+                self.data = fh.read().decode()
                 self.info = fh.info()
                 mimeType = self.info.dict.get('content-type', mimeType)
                 self.uri = fh.geturl()
